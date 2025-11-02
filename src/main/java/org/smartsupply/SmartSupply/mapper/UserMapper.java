@@ -13,7 +13,7 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "isActive", constant = "true")
-    @Mapping(target = "password", ignore = true) // Le password sera encodé séparément
+    @Mapping(target = "password", ignore = true)
     User toEntity(RegisterRequestDto registerRequestDto);
 
 
