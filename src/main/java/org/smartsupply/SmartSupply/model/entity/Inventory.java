@@ -2,7 +2,11 @@ package org.smartsupply.SmartSupply.model.entity;
 
 import jakarta.persistence.*;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.Min;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "inventories", uniqueConstraints = {
@@ -25,10 +29,16 @@ public class Inventory {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @Min(0)
     @Column(nullable = false)
-    private Integer qtyOnHand = 0;
+    private Integer qtyOnHand ;
 
+    @Min(0)
     @Column(nullable = false)
-    private Integer qtyReserved = 0;
+    private Integer qtyReserved ;
+
+    @OneToMany(mappedBy = "inventory")
+    @Builder.Default
+    private List<InventoryMovement> movements = new ArrayList<>();
 
 }
