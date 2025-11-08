@@ -5,12 +5,17 @@ import jakarta.persistence.*;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Entity
-@Table(name="sales")
-
+@Table(name="sales_order_lines")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class SalesOrderLine {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

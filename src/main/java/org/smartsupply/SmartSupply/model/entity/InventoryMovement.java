@@ -32,6 +32,8 @@ public class InventoryMovement {
     @Column(nullable = false)
     private LocalDateTime occurredAt = LocalDateTime.now();
 
+    @Column(name = "reference", length = 200)
+    private String reference;
     @ManyToOne
     @JoinColumn(name="inventory_id",nullable = false)
     private Inventory inventory;

@@ -19,8 +19,8 @@ public class ProductUpdateDto {
     @Size(min = 2, max = 200, message = "Le nom doit contenir entre 2 et 200 caractères")
     private String name;
 
-    @NotNull(message = "L'ID de la catégorie est obligatoire")
-    private Long categoryId;
+    @NotNull(message = "Le nom du catégorie est obligatoire")
+    private String categoryName;
 
     @NotNull(message = "Le prix d'origine est obligatoire")
     @DecimalMin(value = "0.0", inclusive = false, message = "Le prix d'origine doit être supérieur à 0")

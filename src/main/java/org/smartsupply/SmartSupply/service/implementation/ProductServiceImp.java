@@ -38,9 +38,9 @@ public class ProductServiceImp implements ProductService {
             throw new DuplicateResourceException("Un produit avec ce SKU existe déjà");
         }
 
-        Category category = categoryRepository.findById(productRequestDto.getCategoryId())
+        Category category = categoryRepository.findByName(productRequestDto.getCategoryName())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Catégorie introuvable avec l'ID: " + productRequestDto.getCategoryId()));
+                        "Catégorie introuvable avec l'ID: " + productRequestDto.getCategoryName()));
 
         Product product = productMapper.toEntity(productRequestDto);
         product.setCategory(category);
@@ -117,11 +117,17 @@ public class ProductServiceImp implements ProductService {
             throw new DuplicateResourceException("Un autre produit utilise déjà ce SKU");
         }
 
-        Category category = categoryRepository.findById(productUpdateDto.getCategoryId())
+        Category category = categoryRepository.findByName(productUpdateDto.getCategoryName())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Catégorie introuvable avec l'ID: " + productUpdateDto.getCategoryId()));
+                        "Catégorie introuvable avec l'ID: " + productUpdateDto.getCategoryName()));
 
         productMapper.updateEntityFromDto(productUpdateDto, product);
+
+        if (productUpdateDto.getActive() != null) {
+            product.setActive(productUpdateDto.getActive());
+        } else if (product.getActive() == null) {
+            product.setActive(true);
+        }
         product.setCategory(category);
 
         Product updatedProduct = productRepository.save(product);
