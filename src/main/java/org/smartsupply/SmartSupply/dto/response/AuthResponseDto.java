@@ -10,5 +10,5 @@ public class AuthResponseDto {
 
     private String message;
     private UserResponseDto user;
-    private String sessionId; // ID de session simple au lieu de JWT
+    private String sessionId;
 }

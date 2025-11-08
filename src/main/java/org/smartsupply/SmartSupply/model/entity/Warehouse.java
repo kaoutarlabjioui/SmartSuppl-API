@@ -22,6 +22,7 @@ public class Warehouse {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String code;
     @NotBlank
     @Column(nullable = false)
@@ -36,4 +37,8 @@ public class Warehouse {
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<SalesOrder> sales = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "manager_id")
+    private User manager;
 }
