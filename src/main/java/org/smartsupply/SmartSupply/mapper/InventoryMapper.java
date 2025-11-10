@@ -25,10 +25,9 @@ public interface InventoryMapper {
         if (inventories == null) return null;
         return inventories.stream().map(this::toSummaryDto).collect(Collectors.toList());
     }
-
     // helper used by services if needed to map a single inventory
-    default Integer calcAvailable(Inventory inv) {
-        if (inv == null) return 0;
-        return inv.getQtyOnHand() - inv.getQtyReserved();
-    }
+//    default Integer calcAvailable(Inventory inv) {
+//        if (inv == null) return 0;
+//        return inv.getQtyOnHand() - inv.getQtyReserved();
+//    }
 }

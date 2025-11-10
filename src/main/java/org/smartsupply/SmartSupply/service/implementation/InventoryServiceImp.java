@@ -116,7 +116,7 @@ public class InventoryServiceImp implements InventoryService {
                 .reference(reference)
                 .build());
     }
-public void smartReserve(Long productId , Long mainWarehouseId,Integer qty,String reference){
+    public void smartReserve(Long productId , Long mainWarehouseId,Integer qty,String reference){
         int availableMain = getAvailable(productId,mainWarehouseId);
 
         if(availableMain >= qty){
@@ -138,20 +138,24 @@ public void smartReserve(Long productId , Long mainWarehouseId,Integer qty,Strin
             if (available<=0) continue;
 
             int toReserve = Math.min(qty,available);
-            reserve(productId,wId,toReserve,reference,3600);
+
+            log.info("Transfert de {} unités de warehouse {} vers {}", toReserve, wId, mainWarehouseId);
+            transfer(productId, wId, mainWarehouseId, toReserve, reference);
+
+            reserve(productId,mainWarehouseId,toReserve,reference,3600);
             qty -= toReserve;
-            log.info("Réservé {} dans warehouse {}", toReserve, wId);
+            log.info("Réservé {} après transfert depuis warehouse {}", toReserve, wId);
 
             if (qty <= 0) break;
         }
 
-    if (qty > 0) {
+        if (qty > 0) {
 
-        throw new StockUnavailableException("Stock insuffisant pour productId=" + productId + " (reste à réserver: " + qty + ")");
+            throw new StockUnavailableException("Stock insuffisant pour productId=" + productId + " (reste à réserver: " + qty + ")");
+        }
+
+
     }
-
-
-}
     @Override
     @Transactional
     public String reserve(Long productId, Long warehouseId, Integer qty, String sourceRef, long ttlSeconds) {

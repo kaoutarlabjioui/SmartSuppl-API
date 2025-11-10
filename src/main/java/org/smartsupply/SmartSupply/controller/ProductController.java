@@ -1,6 +1,7 @@
 package org.smartsupply.SmartSupply.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.smartsupply.SmartSupply.annotation.RequireAuth;
 import org.smartsupply.SmartSupply.annotation.RequireRole;
@@ -115,5 +116,13 @@ public class ProductController {
     public ResponseEntity<List<ProductResponseDto>> searchProducts(@RequestParam String keyword) {
         List<ProductResponseDto> products = productService.searchProducts(keyword);
         return ResponseEntity.ok(products);
+    }
+
+
+
+    @PatchMapping("/{sku}/deactivate")
+    public ResponseEntity<Void> deactivateProduct(@Valid @PathVariable String sku) {
+                    productService.deactivateProduct(sku);
+        return ResponseEntity.ok().build();
     }
 }
