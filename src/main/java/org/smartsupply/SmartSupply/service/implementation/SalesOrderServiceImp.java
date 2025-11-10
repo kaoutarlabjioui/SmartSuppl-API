@@ -7,10 +7,12 @@ import org.smartsupply.SmartSupply.dto.request.SalesOrderRequestDto;
 import org.smartsupply.SmartSupply.dto.response.SalesOrderResponseDto;
 import org.smartsupply.SmartSupply.exception.BusinessException;
 import org.smartsupply.SmartSupply.exception.ResourceNotFoundException;
+import org.smartsupply.SmartSupply.exception.StockUnavailableException;
 import org.smartsupply.SmartSupply.mapper.SalesOrderMapper;
 import org.smartsupply.SmartSupply.model.entity.*;
 import org.smartsupply.SmartSupply.model.enums.OrderStatus;
 import org.smartsupply.SmartSupply.repository.*;
+import org.smartsupply.SmartSupply.service.InventoryService;
 import org.smartsupply.SmartSupply.service.SalesOrderService;
 
 import org.springframework.data.domain.Page;
@@ -36,6 +38,7 @@ public class SalesOrderServiceImp implements SalesOrderService {
     private final WarehouseRepository warehouseRepository;
     private final ProductRepository productRepository;
     private final InventoryRepository inventoryRepository;
+    private final InventoryService inventoryService;
 
     @Override
     public SalesOrderResponseDto create(SalesOrderRequestDto request) {
@@ -68,7 +71,8 @@ public class SalesOrderServiceImp implements SalesOrderService {
                     throw new BusinessException("Produit inactif: " + lineRequestDto.getProductId());
                 }
 
-                BigDecimal finalPrice = product.getOriginalPrice().add(product.getProfite());
+                BigDecimal unitPrice = product.getOriginalPrice().add(product.getProfite());
+                BigDecimal finalPrice = unitPrice.multiply(BigDecimal.valueOf(lineRequestDto.getQtyOrdered()));
                 SalesOrderLine line = SalesOrderLine.builder()
                         .product(product)
                         .qtyOrdered(lineRequestDto.getQtyOrdered())
@@ -172,37 +176,80 @@ public class SalesOrderServiceImp implements SalesOrderService {
         }
 
         List<String> warnings =new ArrayList<>();
-        if (target == OrderStatus.RESERVED && order.getStatus() == OrderStatus.CREATED) {
 
+        if (target == OrderStatus.RESERVED && order.getStatus() == OrderStatus.CREATED) {
+            log.info("Tentative de réservation pour la commande {} ...", orderId);
             for (SalesOrderLine line : order.getLines()) {
                 Long warehouseId = order.getWarehouse().getId();
                 Long productId = line.getProduct().getId();
                 String productName = line.getProduct().getName();
-                //warning blasst exception
-                Inventory inv = inventoryRepository.findByWarehouseIdAndProductIdForUpdate(warehouseId, productId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Pas d'inventaire pour product " + productName + " en warehouse " + warehouseId));
-                int available = inv.getQtyOnHand() - inv.getQtyReserved();
-                if (available < line.getQtyOrdered()) {
-                    throw new BusinessException("Stock insuffisant pour product " + productId + ". Disponible: " + available + ", demandé: " + line.getQtyOrdered());
+                int qtyOrdered = line.getQtyOrdered();
+                try{
+                    inventoryService.smartReserve(productId,warehouseId,qtyOrdered,"SO"+orderId);
+                    line.setQtyReserved(qtyOrdered);
+                    log.info(" Produit '{}' réservé avec succès (qty={})", productName, qtyOrdered);
+                }catch(StockUnavailableException e){
+                    String msg = String.format(" Stock insuffisant pour le produit '%s' (id=%d). Commande fournisseur prévue.\",\n" + productName, productId);
+                    warnings.add(msg);
+                    log.warn(msg);
                 }
+                //warning blasst exception
+//                Inventory inv = inventoryRepository.findByWarehouseIdAndProductIdForUpdate(warehouseId, productId)
+//                        .orElseThrow(() -> new ResourceNotFoundException("Pas d'inventaire pour product " + productName + " en warehouse " + warehouseId));
+//                int available = inv.getQtyOnHand() - inv.getQtyReserved();
+//                if (available < line.getQtyOrdered()) {
+//                    throw new BusinessException("Stock insuffisant pour product " + productId + ". Disponible: " + available + ", demandé: " + line.getQtyOrdered());
+//                }
             }
 
 
-            for (SalesOrderLine line : order.getLines()) {
+//            for (SalesOrderLine line : order.getLines()) {
+//                Long warehouseId = order.getWarehouse().getId();
+//                Long productId = line.getProduct().getId();
+//                Inventory inv = inventoryRepository.findByWarehouseIdAndProductIdForUpdate(warehouseId, productId).get();
+//                inv.setQtyReserved(inv.getQtyReserved() + line.getQtyOrdered());
+//                inventoryRepository.save(inv);
+//                line.setQtyReserved(line.getQtyOrdered());
+//            }
+        }
+
+        if((order.getStatus()== OrderStatus.RESERVED )&& (target==OrderStatus.CANCELED||target==OrderStatus.CREATED)){
+            log.info("Libération des quantités réservées pour la commande {} ...", orderId);
+
+            for(SalesOrderLine line : order.getLines()){
+
+                int qtyToRelease = line.getQtyReserved();
+                if(qtyToRelease<= 0) continue;
+
                 Long warehouseId = order.getWarehouse().getId();
                 Long productId = line.getProduct().getId();
-                Inventory inv = inventoryRepository.findByWarehouseIdAndProductIdForUpdate(warehouseId, productId).get();
-                inv.setQtyReserved(inv.getQtyReserved() + line.getQtyOrdered());
-                inventoryRepository.save(inv);
-                line.setQtyReserved(line.getQtyOrdered());
+                try{
+                    Inventory inventory = inventoryRepository.findWithLockByProductIdAndWarehouseId(productId, warehouseId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for productId=" + productId + " warehouseId=" + warehouseId));
+                    inventory.setQtyReserved(inventory.getQtyReserved()-qtyToRelease);
+                    if(inventory.getQtyReserved()<0) inventory.setQtyReserved(0);
+                    inventoryRepository.save(inventory);
+                    log.info("Libéré {} unités pour le produit '{}' dans warehouse {}", qtyToRelease, line.getProduct().getName(), warehouseId);
+                    line.setQtyReserved(0);
+                }catch (Exception e){
+                    String msg = String.format("Impossible de libérer le stock pour le produit '%s' (id=%d)",
+                            line.getProduct().getName(), productId);
+                    warnings.add(msg);
+                    log.warn(msg, e);
+                }
+
+
             }
         }
 
         // TODO: gérer d'autres transitions (ex: cancel -> dé-réserver)
         order.setStatus(target);
         SalesOrder saved = salesOrderRepository.save(order);
+
+        SalesOrderResponseDto dto = salesOrderMapper.toResponse(saved);
+        dto.setWarnings(warnings);
         log.info("SalesOrder id={} nouveau status={}", orderId, target);
-        return salesOrderMapper.toResponse(saved);
+        return dto;
     }
 
     @Override

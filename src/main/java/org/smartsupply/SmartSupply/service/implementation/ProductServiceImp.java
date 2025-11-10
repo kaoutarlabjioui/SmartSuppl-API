@@ -2,6 +2,7 @@ package org.smartsupply.SmartSupply.service.implementation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.smartsupply.SmartSupply.exception.BusinessException;
 import org.smartsupply.SmartSupply.exception.DuplicateResourceException;
 import org.smartsupply.SmartSupply.exception.ResourceNotFoundException;
 import org.smartsupply.SmartSupply.mapper.ProductMapper;
@@ -10,8 +11,12 @@ import org.smartsupply.SmartSupply.dto.request.ProductUpdateDto;
 import org.smartsupply.SmartSupply.dto.response.ProductResponseDto;
 import org.smartsupply.SmartSupply.model.entity.Category;
 import org.smartsupply.SmartSupply.model.entity.Product;
+import org.smartsupply.SmartSupply.model.entity.SalesOrderLine;
+import org.smartsupply.SmartSupply.model.enums.OrderStatus;
 import org.smartsupply.SmartSupply.repository.CategoryRepository;
+import org.smartsupply.SmartSupply.repository.InventoryRepository;
 import org.smartsupply.SmartSupply.repository.ProductRepository;
+import org.smartsupply.SmartSupply.repository.SalesOrderLineRepository;
 import org.smartsupply.SmartSupply.service.ProductService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +32,8 @@ public class ProductServiceImp implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
+    private final SalesOrderLineRepository salesOrderLineRepository;
+    private final InventoryRepository inventoryRepository;
 
     @Override
     @Transactional
@@ -193,4 +200,36 @@ public class ProductServiceImp implements ProductService {
     public boolean existsById(Long id) {
         return productRepository.existsById(id);
     }
+
+    @Override
+    @Transactional
+    public void deactivateProduct(String sku) {
+        log.info("Désactivation du produit avec le SKU: {}", sku);
+
+        Product product = productRepository.findBySku(sku)
+                .orElseThrow(() -> new ResourceNotFoundException("Produit introuvable avec le SKU: " + sku));
+
+       long activeOrderCount = salesOrderLineRepository.countByProduct_SkuAndSalesOrder_StatusIn(sku, List.of(OrderStatus.CREATED, OrderStatus.RESERVED));
+        if(activeOrderCount > 0){
+            throw new BusinessException("Le produit est présent dans des commandes en cours (CREATED).");
+        }
+
+
+        int totalReserved = inventoryRepository.findByProduct_Sku(sku)
+                .stream()
+                .mapToInt(inv -> inv.getQtyReserved())
+                .sum();
+
+        if (totalReserved > 0){
+            throw new BusinessException("Le produit a des quantités réservées en stock.");
+        }
+
+        product.setActive(false);
+        productRepository.save(product);
+
+        log.info("Produit désactivé avec succès. SKU: {}", sku);
+    }
+
+
 }
+

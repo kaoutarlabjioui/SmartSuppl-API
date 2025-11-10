@@ -21,4 +21,6 @@ public interface ProductService {
     List<ProductResponseDto> searchBySku(String sku);
     List<ProductResponseDto> searchProducts(String keyword);
     boolean existsById(Long id);
+    //deactivate product with  sku
+    void deactivateProduct(String sku);
 }
