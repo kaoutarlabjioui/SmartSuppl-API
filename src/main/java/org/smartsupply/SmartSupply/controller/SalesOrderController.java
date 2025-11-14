@@ -2,9 +2,11 @@ package org.smartsupply.SmartSupply.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.smartsupply.SmartSupply.annotation.RequireRole;
 import org.smartsupply.SmartSupply.dto.request.SalesOrderLineRequestDto;
 import org.smartsupply.SmartSupply.dto.request.SalesOrderRequestDto;
 import org.smartsupply.SmartSupply.dto.response.SalesOrderResponseDto;
+import org.smartsupply.SmartSupply.model.enums.Role;
 import org.smartsupply.SmartSupply.service.SalesOrderService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -71,6 +73,13 @@ public class SalesOrderController {
 
         SalesOrderResponseDto dto = salesOrderService.updateStatus(orderId, status);
         return ResponseEntity.ok(dto);
+    }
+
+    @PutMapping("/{id}/ship")
+   // @RequireRole({Role.WAREHOUSE_MANAGER, Role.ADMIN})
+    public ResponseEntity<Void> shipOrder(@PathVariable Long id, @RequestParam(required = false) String trackingNumber) {
+        salesOrderService.shipOrder(id, trackingNumber);
+        return ResponseEntity.ok().build();
     }
 
 

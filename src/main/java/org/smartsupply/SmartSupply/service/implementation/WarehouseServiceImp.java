@@ -75,7 +75,7 @@ public class WarehouseServiceImp implements WarehouseService {
     public WarehouseDetailDto getWarehouseById(Long id) {
         Warehouse warehouse = warehouseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Warehouse introuvable id=" + id));
-        // assurez-vous que inventories sont initialisés ou fetchés via repo pour éviter lazy issues
+
         return warehouseMapper.toDetailDto(warehouse);
     }
 
@@ -113,7 +113,7 @@ public class WarehouseServiceImp implements WarehouseService {
         Warehouse warehouse = warehouseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Warehouse introuvable id=" + id));
 
-        // règle métier : ne pas supprimer si inventory existant (ou forcer désactivation)
+
         long invCount = inventoryRepository.findByWarehouseId(id).stream().count();
         if (invCount > 0) {
             throw new BusinessException("Impossible de supprimer un entrepôt contenant des stocks. Désactivez-le d'abord.");

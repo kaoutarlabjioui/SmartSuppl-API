@@ -15,7 +15,7 @@ public interface InventoryService {
     // returns reservation id string
    String reserve(Long productId, Long warehouseId, Integer qty, String sourceRef, long ttlSeconds);
 
-    void releaseReservation(Long reservationId);
+
 
     void transfer(Long productId, Long sourceWarehouseId, Long targetWarehouseId, Integer qty, String reference);
 

@@ -1,0 +1,17 @@
+package org.smartsupply.SmartSupply.service;
+
+import org.smartsupply.SmartSupply.dto.request.*;
+import org.smartsupply.SmartSupply.dto.response.PurchaseOrderResponseDto;
+
+import java.util.List;
+
+public interface PurchaseOrderService {
+    PurchaseOrderResponseDto createPurchaseOrder(PurchaseOrderRequestDto dto);
+    List<PurchaseOrderResponseDto> getAllPurchaseOrders();
+    PurchaseOrderResponseDto getPurchaseOrderById(Long id);
+    PurchaseOrderResponseDto addLineToPurchaseOrder(Long purchaseOrderId, POLineRequestDto lineDto);
+    void approvePurchaseOrder(Long purchaseOrderId);
+
+    void markPurchaseOrderAsReceived(Long purchaseOrderId, Long warehouseId);
+    void deletePurchaseOrder(Long id);
+}

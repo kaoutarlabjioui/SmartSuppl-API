@@ -91,13 +91,13 @@ public class UserServiceImp implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec l'ID: " + id));
 
-        // Vérifier si le nouvel email n'est pas déjà utilisé
+
         if (userRepository.existsByEmailAndIdNot(userUpdateDto.getEmail(), id)) {
             log.error("L'email '{}' est déjà utilisé par un autre utilisateur", userUpdateDto.getEmail());
             throw new DuplicateResourceException("Cet email est déjà utilisé par un autre utilisateur");
         }
 
-        // Mettre à jour les champs
+
         user.setFirstName(userUpdateDto.getFirstName());
         user.setLastName(userUpdateDto.getLastName());
         user.setEmail(userUpdateDto.getEmail());

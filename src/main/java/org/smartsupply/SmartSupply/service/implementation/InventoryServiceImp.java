@@ -5,19 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.smartsupply.SmartSupply.exception.BusinessException;
 import org.smartsupply.SmartSupply.exception.ResourceNotFoundException;
 import org.smartsupply.SmartSupply.exception.StockUnavailableException;
-import org.smartsupply.SmartSupply.model.entity.Inventory;
-import org.smartsupply.SmartSupply.model.entity.InventoryMovement;
-import org.smartsupply.SmartSupply.model.entity.Product;
-import org.smartsupply.SmartSupply.model.entity.Warehouse;
+import org.smartsupply.SmartSupply.model.entity.*;
 import org.smartsupply.SmartSupply.model.enums.MovementType;
-import org.smartsupply.SmartSupply.repository.InventoryMovementRepository;
-import org.smartsupply.SmartSupply.repository.InventoryRepository;
-import org.smartsupply.SmartSupply.repository.ProductRepository;
-import org.smartsupply.SmartSupply.repository.WarehouseRepository;
+import org.smartsupply.SmartSupply.model.enums.POStatus;
+import org.smartsupply.SmartSupply.repository.*;
 import org.smartsupply.SmartSupply.service.InventoryService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -31,7 +27,10 @@ public class InventoryServiceImp implements InventoryService {
     private final ProductRepository productRepository;
     private final WarehouseRepository warehouseRepository;
     private final InventoryMovementRepository movementRepository;
-    // private final ReservationRepository reservationRepository; // décommenter si vous ajoutez Reservation entity
+    private final PurchaseOrderRepository purchaseOrderRepository;
+    private final SupplierRepository supplierRepository;
+
+
 
     @Override
     @Transactional
@@ -101,7 +100,7 @@ public class InventoryServiceImp implements InventoryService {
         Inventory inv = inventoryRepository.findWithLockByProductIdAndWarehouseId(productId, warehouseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for productId=" + productId + " warehouseId=" + warehouseId));
 
-        int newQtyOnHand = inv.getQtyOnHand() + qty; // qty can be negative
+        int newQtyOnHand = inv.getQtyOnHand() + qty;
         if (newQtyOnHand < inv.getQtyReserved()) {
             throw new BusinessException("Ajustement invalide: qtyOnHand < qtyReserved");
         }
@@ -150,12 +149,36 @@ public class InventoryServiceImp implements InventoryService {
         }
 
         if (qty > 0) {
+            Supplier supplier = getOrCreateDefaultSupplier();
 
-            throw new StockUnavailableException("Stock insuffisant pour productId=" + productId + " (reste à réserver: " + qty + ")");
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found id=" + productId));
+
+            PurchaseOrder po = PurchaseOrder.builder()
+                    .supplier(supplier)
+                    .status(POStatus.CREATED)
+                    .build();
+
+            BigDecimal unitPrice = product.getOriginalPrice() != null ? product.getOriginalPrice() : BigDecimal.ZERO;
+
+            POLine poLine = POLine.builder()
+                    .purchaseOrder(po)
+                    .product(product)
+                    .qty(qty)
+                    .price(unitPrice)
+                    .build();
+
+            po.getLines().add(poLine);
+
+            PurchaseOrder saved = purchaseOrderRepository.save(po);
+
+            log.info("PurchaseOrder créé id={} pour productId={} qty={} supplierId={}", saved.getId(), productId, qty, supplier.getId());
+
+
+            throw new StockUnavailableException("PO_CREATED:" + saved.getId());
         }
-
-
     }
+
     @Override
     @Transactional
     public String reserve(Long productId, Long warehouseId, Integer qty, String sourceRef, long ttlSeconds) {
@@ -181,13 +204,6 @@ public class InventoryServiceImp implements InventoryService {
 
 
         return UUID.randomUUID().toString();
-    }
-
-    @Override
-    @Transactional
-    public void releaseReservation(Long reservationId) {
-
-        throw new UnsupportedOperationException("releaseReservation is not implemented. Implement Reservation entity for TTL.");
     }
 
     @Override
@@ -246,5 +262,19 @@ public class InventoryServiceImp implements InventoryService {
     public Integer getAvailable(Long productId, Long warehouseId) {
         Integer v = inventoryRepository.findAvailableByProductIdAndWarehouseId(productId, warehouseId);
         return v == null ? 0 : v;
+    }
+
+
+    private Supplier getOrCreateDefaultSupplier() {
+        return supplierRepository.findAll().stream().findFirst().orElseGet(() -> {
+            Supplier s = Supplier.builder()
+                    .name("UNKNOWN_SUPPLIER")
+                    .email("unknown@example.com")
+                    .contact("unknown")
+                    .build();
+            Supplier saved = supplierRepository.save(s);
+            log.info("Supplier par défaut créé id={}", saved.getId());
+            return saved;
+        });
     }
 }

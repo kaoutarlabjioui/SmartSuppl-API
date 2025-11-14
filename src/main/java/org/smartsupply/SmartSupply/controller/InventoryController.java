@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/inventories")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+
 public class InventoryController {
 
     private final InventoryService inventoryService;
@@ -68,12 +68,6 @@ public class InventoryController {
     }
 
 
-    @PostMapping("/release/{reservationId}")
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
-    public ResponseEntity<Void> release(@PathVariable Long reservationId) {
-        inventoryService.releaseReservation(reservationId);
-        return ResponseEntity.ok().build();
-    }
 
     @PostMapping("/transfer")
     @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})

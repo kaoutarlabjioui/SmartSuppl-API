@@ -15,4 +15,6 @@ public interface SalesOrderService {
     SalesOrderResponseDto addLine(Long orderId, SalesOrderLineRequestDto lineRequest);
     SalesOrderResponseDto updateStatus(Long orderId, String newStatus);
     void delete(Long id);
+
+    void shipOrder(Long orderId, String trackingNumber);
 }
