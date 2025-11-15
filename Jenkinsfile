@@ -42,18 +42,21 @@ pipeline {
       }
     }
 
-    stage('SonarQube Analysis') {
-      when {
-        expression { env.SONAR_HOST?.trim() && env.SONAR_TOKEN?.trim() }
-      }
-      steps {
-        bat """
-          ${MVN_CMD} -B sonar:sonar ^
-            -Dsonar.host.url=${env.SONAR_HOST} ^
-            -Dsonar.login=${env.SONAR_TOKEN}
-        """
-      }
-    }
+   stage('SonarQube Analysis') {
+       steps {
+           script {
+               withSonarQubeEnv('MySonar') {
+                   sh """
+                       sonar-scanner \
+                       -Dsonar.projectKey=smartSupply \
+                       -Dsonar.sources=src \
+                       -Dsonar.host.url=http://localhost:9000 \
+                       -Dsonar.login=squ_4ab39125cbc1fcab3ef818f659775e34f3abf248
+                   """
+               }
+           }
+       }
+   }
 
     stage('Package') {
       steps {
