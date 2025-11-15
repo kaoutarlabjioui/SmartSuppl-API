@@ -1,5 +1,10 @@
 pipeline {
   agent any
+  tools {
+      // Hna fin katgol l Jenkins ykhdem b JDK-17
+      jdk 'JDK-17' // <-- Smiya li derti f Global Tool Configuration
+      maven 'Maven-3.9.1' // Mzyan t7aded tal version d Maven
+  }
 
   environment {
     MVN_CMD = "mvnw.cmd"
