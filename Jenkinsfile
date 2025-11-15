@@ -25,27 +25,27 @@ pipeline {
       steps {
         checkout scm
         // Ensure the Maven wrapper is executable on Linux agents
-        sh 'chmod +x mvnw || true'
-        sh 'ls -la mvnw || true'
+        bat 'chmod +x mvnw || true'
+        bat 'ls -la mvnw || true'
       }
     }
 
     stage('Build (compile)') {
       steps {
-        sh "${MVN_CMD} -B -DskipTests=true clean package"
+        bat "${MVN_CMD} -B -DskipTests=true clean package"
       }
     }
 
     stage('Unit Tests') {
       steps {
-        sh "${MVN_CMD} -B test"
+        bat "${MVN_CMD} -B test"
       }
     }
 
     stage('JaCoCo Report') {
       steps {
         // Generate HTML coverage report
-        sh "${MVN_CMD} -B jacoco:report"
+        bat "${MVN_CMD} -B jacoco:report"
       }
     }
 
@@ -54,13 +54,13 @@ pipeline {
         expression { env.SONAR_HOST?.trim() && env.SONAR_TOKEN?.trim() }
       }
       steps {
-        sh "${MVN_CMD} -B sonar:sonar -Dsonar.host.url=${env.SONAR_HOST} -Dsonar.login=${env.SONAR_TOKEN}"
+        bat "${MVN_CMD} -B sonar:sonar -Dsonar.host.url=${env.SONAR_HOST} -Dsonar.login=${env.SONAR_TOKEN}"
       }
     }
 
     stage('Package') {
       steps {
-        sh "${MVN_CMD} -B -DskipTests=true package"
+        bat "${MVN_CMD} -B -DskipTests=true package"
       }
     }
   }
