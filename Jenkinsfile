@@ -1,16 +1,9 @@
-// Declarative Jenkins pipeline for Digital Logistics
-// - Builds, runs unit tests, generates JaCoCo report
-// - Optionally runs SonarQube analysis when SONAR_HOST and SONAR_TOKEN are provided
-
 pipeline {
-  // Run on any available node (avoid Docker agent because controller/node may not have Docker installed)
   agent any
 
   environment {
-    MVN_CMD = './mvnw'
-    MAVEN_OPTS = '-Xmx1g'
-    // Optional environment variables to provide in Jenkins credentials or job config:
-    // SONAR_HOST, SONAR_TOKEN
+    MVN_CMD = "mvnw.cmd"
+    MAVEN_OPTS = "-Xmx1g"
   }
 
   options {
@@ -21,12 +14,13 @@ pipeline {
   }
 
   stages {
+
     stage('Checkout') {
       steps {
         checkout scm
-        // Ensure the Maven wrapper is executable on Linux agents
-        bat 'chmod +x mvnw || true'
-        bat 'ls -la mvnw || true'
+
+        // Windows diagnostics only
+        bat 'dir'
       }
     }
 
@@ -44,7 +38,6 @@ pipeline {
 
     stage('JaCoCo Report') {
       steps {
-        // Generate HTML coverage report
         bat "${MVN_CMD} -B jacoco:report"
       }
     }
@@ -54,7 +47,11 @@ pipeline {
         expression { env.SONAR_HOST?.trim() && env.SONAR_TOKEN?.trim() }
       }
       steps {
-        bat "${MVN_CMD} -B sonar:sonar -Dsonar.host.url=${env.SONAR_HOST} -Dsonar.login=${env.SONAR_TOKEN}"
+        bat """
+          ${MVN_CMD} -B sonar:sonar ^
+            -Dsonar.host.url=${env.SONAR_HOST} ^
+            -Dsonar.login=${env.SONAR_TOKEN}
+        """
       }
     }
 
@@ -67,13 +64,8 @@ pipeline {
 
   post {
     always {
-      // Publish JUnit results
       junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
-
-      // Archive JaCoCo HTML report and built artifacts
       archiveArtifacts artifacts: 'target/*.jar, target/site/jacoco/**', allowEmptyArchive: true
-
-      // Clean workspace to avoid filling Jenkins disk
       cleanWs()
     }
 
