@@ -50,7 +50,7 @@ pipeline {
               sonar-scanner ^
               -Dsonar.projectKey=smartSupply ^
               -Dsonar.sources=src ^
-              -Dsonar.host.url=http://localhost:9000 ^
+              -Dsonar.host.url=http://sonarqube:9000 ^
               -Dsonar.login=squ_4ab39125cbc1fcab3ef818f659775e34f3abf248
             """
           }
