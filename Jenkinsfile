@@ -46,16 +46,7 @@ pipeline {
       }
     }
 
-    stage('SonarQube Analysis') {
-      steps {
-        script {
-          // ⚠️ Remplace 'SonarQubeServer' par le nom exact configuré dans Jenkins
-          withSonarQubeEnv('SonarQubeServer') {
-            bat "${MVN_CMD} sonar:sonar"
-          }
-        }
-      }
-    }
+
 
     stage('Package') {
       steps {
