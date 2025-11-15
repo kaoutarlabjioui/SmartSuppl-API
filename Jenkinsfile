@@ -18,7 +18,6 @@ pipeline {
     stage('Checkout') {
       steps {
         checkout scm
-
         // Windows diagnostics only
         bat 'dir'
       }
@@ -42,21 +41,22 @@ pipeline {
       }
     }
 
-   stage('SonarQube Analysis') {
-       steps {
-           script {
-               withSonarQubeEnv('MySonar') {
-                   sh """
-                       sonar-scanner \
-                       -Dsonar.projectKey=smartSupply \
-                       -Dsonar.sources=src \
-                       -Dsonar.host.url=http://localhost:9000 \
-                       -Dsonar.login=squ_4ab39125cbc1fcab3ef818f659775e34f3abf248
-                   """
-               }
-           }
-       }
-   }
+    stage('SonarQube Analysis') {
+      steps {
+        script {
+          // ⚠️ Remplace 'SonarQubeServer' par le nom exact configuré dans Jenkins
+          withSonarQubeEnv('SonarQubeServer') {
+            bat """
+              sonar-scanner ^
+              -Dsonar.projectKey=smartSupply ^
+              -Dsonar.sources=src ^
+              -Dsonar.host.url=http://localhost:9000 ^
+              -Dsonar.login=squ_4ab39125cbc1fcab3ef818f659775e34f3abf248
+            """
+          }
+        }
+      }
+    }
 
     stage('Package') {
       steps {
