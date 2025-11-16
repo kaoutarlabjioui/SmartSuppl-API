@@ -46,15 +46,21 @@ pipeline {
       }
     }
 
-     stage('SonarQube Analysis') {
-       steps {
-         script {
-           withSonarQubeEnv('smartSupply') {
-             bat "${MVN_CMD} sonar:sonar -Dsonar.host.url=http://localhost:9000 -Dsonar.login=TON_TOKEN"
-           }
-         }
-       }
-     }
+    stage('SonarQube Analysis') {
+      steps {
+        script {
+          withSonarQubeEnv('smartSupply') {
+            bat """
+              ${MVN_CMD} sonar:sonar ^
+                -Dsonar.projectKey=smartSupply ^
+                -Dsonar.host.url=%SONAR_HOST_URL% ^
+                -Dsonar.token=%SONAR_AUTH_TOKEN%
+            """
+          }
+        }
+      }
+    }
+
 
     stage('Package') {
       steps {
