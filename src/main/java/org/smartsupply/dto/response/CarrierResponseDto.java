@@ -1,9 +1,6 @@
 package org.smartsupply.dto.response;
 
-import jakarta.persistence.Column;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+
 import lombok.*;
 
 import java.math.BigDecimal;

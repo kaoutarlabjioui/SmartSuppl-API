@@ -2,8 +2,6 @@ package org.smartsupply.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.smartsupply.dto.response.*;
-import org.smartsupply.model.entity.*;
 import org.smartsupply.dto.response.POLineResponseDto;
 import org.smartsupply.dto.response.PurchaseOrderResponseDto;
 import org.smartsupply.model.entity.POLine;
