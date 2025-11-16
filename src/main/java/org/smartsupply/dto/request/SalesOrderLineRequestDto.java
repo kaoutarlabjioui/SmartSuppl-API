@@ -4,7 +4,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -18,6 +17,4 @@ public class SalesOrderLineRequestDto {
     @Min(1)
     private int qtyOrdered;
 
-//    @Min(0)
-//    private BigDecimal price;
 }

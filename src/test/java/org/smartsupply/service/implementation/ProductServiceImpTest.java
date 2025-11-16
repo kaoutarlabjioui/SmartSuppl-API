@@ -14,7 +14,6 @@ import org.smartsupply.mapper.ProductMapper;
 import org.smartsupply.model.entity.Category;
 import org.smartsupply.model.entity.Inventory;
 import org.smartsupply.model.entity.Product;
-import org.smartsupply.repository.*;
 import org.smartsupply.repository.CategoryRepository;
 import org.smartsupply.repository.InventoryRepository;
 import org.smartsupply.repository.ProductRepository;
