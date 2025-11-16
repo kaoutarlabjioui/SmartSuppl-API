@@ -46,9 +46,13 @@ pipeline {
       }
     }
 
-     withSonarQubeEnv('smartSupply') {
-       withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
-         bat "${MVN_CMD} sonar:sonar -Dsonar.host.url=http://localhost:9000 -Dsonar.login=%SONAR_TOKEN%"
+     stage('SonarQube Analysis') {
+       steps {
+         script {
+           withSonarQubeEnv('smartSupply') {
+             bat "${MVN_CMD} sonar:sonar -Dsonar.host.url=http://localhost:9000 -Dsonar.login=TON_TOKEN"
+           }
+         }
        }
      }
 
