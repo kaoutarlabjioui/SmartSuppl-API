@@ -46,16 +46,11 @@ pipeline {
       }
     }
 
-     stage('SonarQube Analysis') {
-          steps {
-            script {
-              // ⚠️ Remplace 'SonarQubeServer' par le nom exact configuré dans Jenkins
-              withSonarQubeEnv('smartSupply') {
-                bat "${MVN_CMD} sonar:sonar"
-              }
-            }
-          }
-        }
+     withSonarQubeEnv('smartSupply') {
+       withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+         bat "${MVN_CMD} sonar:sonar -Dsonar.host.url=http://localhost:9000 -Dsonar.login=%SONAR_TOKEN%"
+       }
+     }
 
     stage('Package') {
       steps {
