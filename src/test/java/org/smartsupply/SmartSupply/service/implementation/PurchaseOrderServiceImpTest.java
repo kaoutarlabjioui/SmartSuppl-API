@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
  * Tests additionnels pour augmenter la couverture de PurchaseOrderServiceImp.
  */
 @ExtendWith(MockitoExtension.class)
-class PurchaseOrderServiceImpExtraTest {
+class PurchaseOrderServiceImpTest {
 
     @Mock
     private PurchaseOrderRepository purchaseOrderRepository;
