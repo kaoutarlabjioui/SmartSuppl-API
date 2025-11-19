@@ -92,12 +92,12 @@ public class SupplierServiceImp implements SupplierService {
 
     @Override
     public List<SupplierSimpleDto> getAllSimple() {
-        return supplierRepository.findAll().stream().map(supplierMapper::toSimpleDto).collect(Collectors.toList());
+        return supplierRepository.findAll().stream().map(supplierMapper::toSimpleDto).toList();
     }
 
     @Override
     public List<SupplierResponseDto> search(String q) {
-        return supplierRepository.findByNameContainingIgnoreCase(q).stream().map(supplierMapper::toResponseDto).collect(Collectors.toList());
+        return supplierRepository.findByNameContainingIgnoreCase(q).stream().map(supplierMapper::toResponseDto).toList();
     }
 
     @Override

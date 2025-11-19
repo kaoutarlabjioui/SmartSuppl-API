@@ -10,6 +10,7 @@ import org.smartsupply.dto.request.ProductRequestDto;
 import org.smartsupply.dto.request.ProductUpdateDto;
 import org.smartsupply.dto.response.ProductResponseDto;
 import org.smartsupply.model.entity.Category;
+import org.smartsupply.model.entity.Inventory;
 import org.smartsupply.model.entity.Product;
 import org.smartsupply.model.enums.OrderStatus;
 import org.smartsupply.repository.CategoryRepository;
@@ -216,7 +217,7 @@ public class ProductServiceImp implements ProductService {
 
         int totalReserved = inventoryRepository.findByProduct_Sku(sku)
                 .stream()
-                .mapToInt(inv -> inv.getQtyReserved())
+                .mapToInt(Inventory::getQtyReserved)
                 .sum();
 
         if (totalReserved > 0){

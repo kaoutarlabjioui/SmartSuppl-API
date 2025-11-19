@@ -213,7 +213,7 @@ class WarehouseServiceImpTest {
         when(warehouseRepository.save(any(Warehouse.class))).thenAnswer(i -> i.getArgument(0));
         when(warehouseMapper.toSimpleDto(any(Warehouse.class))).thenReturn(out);
 
-        WarehouseSimpleDto res2 = service.updateWarehouse(21L, req2);
+
         assertNull(existing.getManager());
     }
 

@@ -170,10 +170,15 @@
 
                         <configuration>
                             <excludes>
-                                <exclude>**/mapper/**</exclude>
+                                <exclude>org/smartsupply/mapper/**</exclude>
                                 <exclude>**/dto/**</exclude>
                                 <exclude>**/model/**</exclude>
                                 <exclude>**/config/**</exclude>
+                                <exclude>org/smartsupply/aspect/**</exclude>
+                                <exclude>org/smartsupply/exception/**</exclude>
+                                <exclude>org/smartsupply/interceptor/**</exclude>
+
+
                             </excludes>
                         </configuration>
                     </execution>
