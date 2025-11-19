@@ -8,7 +8,7 @@ pipeline {
 
   environment {
     MVN_CMD = "mvnw.cmd"
-    MAVEN_OPTS = "-Xmx1g"
+    MAVEN_OPTS = "-Xmx2g"
   }
 
   options {
