@@ -105,11 +105,7 @@ public class GlobalExceptionHandler {
         log.error("Erreur de validation des données");
 
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
+        ex.getBindingResult().getAllErrors().forEach(error -> {String fieldName = ((FieldError) error).getField();String errorMessage = error.getDefaultMessage();errors.put(fieldName, errorMessage);});
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }

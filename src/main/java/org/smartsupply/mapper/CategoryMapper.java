@@ -48,7 +48,7 @@ public interface CategoryMapper {
         }
         return products.stream()
                 .map(this::toProductSummary)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     default ProductSummaryDto toProductSummary(Product product) {
