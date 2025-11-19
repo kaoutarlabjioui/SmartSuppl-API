@@ -6,7 +6,7 @@ import org.smartsupply.dto.response.InventorySummaryDto;
 import org.smartsupply.model.entity.Inventory;
 
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 @Mapper(componentModel = "spring")
 public interface InventoryMapper {
