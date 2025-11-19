@@ -36,7 +36,7 @@ class UserServiceImpTest {
 
     @BeforeEach
     void setUp() {
-        // rendre ce stub lenient pour éviter UnnecessaryStubbingException
+
         lenient().when(userMapper.toResponseDto(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
             UserResponseDto dto = new UserResponseDto();

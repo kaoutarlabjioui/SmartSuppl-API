@@ -79,7 +79,7 @@ class PurchaseOrderServiceImpTest {
     void approvePurchaseOrder_statusNull_throwsBusinessException() {
         PurchaseOrder po = new PurchaseOrder();
         po.setId(300L);
-        po.setStatus(null); // will hit the "must be in CREATED" branch
+        po.setStatus(null);
         when(purchaseOrderRepository.findById(300L)).thenReturn(Optional.of(po));
 
         BusinessException ex = assertThrows(BusinessException.class, () -> service.approvePurchaseOrder(300L));
