@@ -33,7 +33,7 @@ public class UserServiceImp implements UserService {
         log.info("{} utilisateur(s) trouvé(s)", users.size());
         return users.stream()
                 .map(userMapper::toResponseDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -43,7 +43,7 @@ public class UserServiceImp implements UserService {
         log.info("{} utilisateur(s) actif(s) trouvé(s)", users.size());
         return users.stream()
                 .map(userMapper::toResponseDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
 
@@ -54,7 +54,7 @@ public class UserServiceImp implements UserService {
         log.info("{} utilisateur(s) inactif(s) trouvé(s)", users.size());
         return users.stream()
                 .map(userMapper::toResponseDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -80,7 +80,7 @@ public class UserServiceImp implements UserService {
         log.info("{} utilisateur(s) trouvé(s) avec le rôle {}", users.size(), role);
         return users.stream()
                 .map(userMapper::toResponseDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -168,7 +168,7 @@ public class UserServiceImp implements UserService {
         log.info("{} utilisateur(s) trouvé(s)", users.size());
         return users.stream()
                 .map(userMapper::toResponseDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
