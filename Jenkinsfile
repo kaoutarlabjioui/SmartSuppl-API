@@ -55,6 +55,8 @@ pipeline {
                 -Dsonar.projectKey=smartSupply ^
                 -Dsonar.host.url=%SONAR_HOST_URL% ^
                 -Dsonar.token=%SONAR_AUTH_TOKEN%
+                -Dsonar.exclusions=src/main/java/org/smartsupply/dto/**,src/main/java/org/smartsupply/mapper/**
+
             """
           }
         }
