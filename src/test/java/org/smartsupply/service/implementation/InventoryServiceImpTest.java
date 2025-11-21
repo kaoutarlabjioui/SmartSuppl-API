@@ -46,7 +46,7 @@ public class InventoryServiceImpTest {
 
     @BeforeEach
     void setup() {
-        // Rendre les stubs lenient pour éviter UnnecessaryStubbingException dans plusieurs tests
+
         lenient().when(inventoryRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         lenient().when(movementRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         lenient().when(purchaseOrderRepository.save(any())).thenAnswer(i -> {
@@ -65,12 +65,12 @@ public class InventoryServiceImpTest {
         });
     }
 
-    // ================== ensureInventoryExists ==================
+
     @Test
     void ensureInventoryExists_productNotFound_throws() {
-        // Moquer uniquement le stub nécessaire : produit absent -> exception immédiate.
+
         when(productRepository.existsById(1L)).thenReturn(false);
-        // removed unnecessary stub for warehouseRepository.existsById(...)
+
 
         ResourceNotFoundException ex = assertThrows(ResourceNotFoundException.class,
                 () -> service.ensureInventoryExists(1L, 10L));
