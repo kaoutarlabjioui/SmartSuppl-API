@@ -3,13 +3,19 @@ package org.smartsupply.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
 @Configuration
 @EnableWebSecurity
@@ -42,4 +48,50 @@ public class SecurityConfig {
 
         return new InMemoryUserDetailsManager(admin, wm, client);
     }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .cors(cors -> cors.disable())
+                .csrf(csrf -> csrf.disable())
+
+                .httpBasic(Customizer.withDefaults())
+
+                .logout(logout -> logout
+                        .logoutUrl("/api/Auth/Logout")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.setHeader("WWW-Authenticate", "Basic realm=\"SmartSuppl\"");
+                            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Logged out");
+                        })
+                        .permitAll()
+                )
+
+
+                .authorizeHttpRequests(auth -> auth
+
+
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/products/category/**").hasRole("ADMIN")
+
+                        .requestMatchers("/api/inventory/**").hasAnyRole("WAREHOUSE_MANAGER", "ADMIN")
+                        .requestMatchers("/api/shipments/**").hasAnyRole("WAREHOUSE_MANAGER", "ADMIN")
+
+                        .requestMatchers("/api/orders/**").hasAnyRole("CLIENT", "ADMIN")
+
+                        .requestMatchers("/api/**").authenticated()
+                )
+
+
+
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                        .accessDeniedHandler((request, response, accessDeniedException) ->
+                                response.sendError(HttpStatus.FORBIDDEN.value(), "Access Denied"))
+                );
+
+        return http.build();
+    }
+
 }

@@ -67,7 +67,7 @@ public class ProductController {
     }
 
     @GetMapping("/category/{categoryId}")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<List<ProductResponseDto>> getProductsByCategory(@PathVariable Long categoryId) {
         List<ProductResponseDto> products = productService.getProductsByCategory(categoryId);
         return ResponseEntity.ok(products);
