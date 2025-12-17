@@ -1,1 +1,1 @@
-sdfghjkSmartSupply n
+Basic auth 
