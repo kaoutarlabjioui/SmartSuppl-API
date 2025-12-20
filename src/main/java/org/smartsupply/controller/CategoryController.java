@@ -2,8 +2,6 @@ package org.smartsupply.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.smartsupply.annotation.RequireAuth;
-import org.smartsupply.annotation.RequireRole;
 import org.smartsupply.dto.request.CategoryRequestDto;
 import org.smartsupply.dto.request.CategoryUpdateDto;
 import org.smartsupply.dto.response.CategoryDetailResponseDto;
@@ -24,7 +22,7 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
     public ResponseEntity<CategoryResponseDto> createCategory(
             @Valid @RequestBody CategoryRequestDto categoryRequestDto) {
         CategoryResponseDto response = categoryService.createCategory(categoryRequestDto);
@@ -32,28 +30,28 @@ public class CategoryController {
     }
 
     @GetMapping
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<List<CategoryResponseDto>> getAllCategories() {
         List<CategoryResponseDto> categories = categoryService.getAllCategories();
         return ResponseEntity.ok(categories);
     }
 
     @GetMapping("/{id}")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<CategoryResponseDto> getCategoryById(@PathVariable Long id) {
         CategoryResponseDto category = categoryService.getCategoryById(id);
         return ResponseEntity.ok(category);
     }
 
     @GetMapping("/{id}/details")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<CategoryDetailResponseDto> getCategoryWithProducts(@PathVariable Long id) {
         CategoryDetailResponseDto category = categoryService.getCategoryWithProducts(id);
         return ResponseEntity.ok(category);
     }
 
     @PutMapping("/{id}")
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
     public ResponseEntity<CategoryResponseDto> updateCategory(
             @PathVariable Long id,
             @Valid @RequestBody CategoryUpdateDto categoryUpdateDto) {
@@ -62,14 +60,14 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
-    @RequireRole(Role.ADMIN)
+    //@RequireRole(Role.ADMIN)
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/search")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<List<CategoryResponseDto>> searchCategories(
             @RequestParam String name) {
         List<CategoryResponseDto> categories = categoryService.searchCategories(name);

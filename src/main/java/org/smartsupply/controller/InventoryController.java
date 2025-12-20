@@ -2,8 +2,7 @@ package org.smartsupply.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.smartsupply.annotation.RequireAuth;
-import org.smartsupply.annotation.RequireRole;
+
 import org.smartsupply.dto.request.InventoryRequestDto;
 import org.smartsupply.dto.response.InventorySummaryDto;
 import org.smartsupply.mapper.InventoryMapper;
@@ -28,7 +27,7 @@ public class InventoryController {
 
 
     @PostMapping("/ensure")
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+//    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
     public ResponseEntity<Void> ensure(@Valid @RequestBody InventoryRequestDto req) {
         inventoryService.ensureInventoryExists(req.getProductId(), req.getWarehouseId());
         return ResponseEntity.ok().build();
@@ -36,7 +35,7 @@ public class InventoryController {
 
 
     @PostMapping("/inbound")
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
     public ResponseEntity<Void> inbound(@Valid @RequestBody InventoryRequestDto req) {
         inventoryService.inbound(req.getProductId(), req.getWarehouseId(), req.getQty(), req.getReference());
         return ResponseEntity.ok().build();
@@ -44,7 +43,7 @@ public class InventoryController {
 
 
     @PostMapping("/outbound")
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
     public ResponseEntity<Void> outbound(@Valid @RequestBody InventoryRequestDto req) {
         inventoryService.outbound(req.getProductId(), req.getWarehouseId(), req.getQty(), req.getReference());
         return ResponseEntity.ok().build();
@@ -52,7 +51,7 @@ public class InventoryController {
 
 
     @PostMapping("/adjustment")
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
     public ResponseEntity<Void> adjustment(@Valid @RequestBody InventoryRequestDto req) {
         inventoryService.adjustment(req.getProductId(), req.getWarehouseId(), req.getQty(), req.getReference());
         return ResponseEntity.ok().build();
@@ -60,7 +59,7 @@ public class InventoryController {
 
 
     @PostMapping("/reserve")
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
     public ResponseEntity<?> reserve(@Valid @RequestBody InventoryRequestDto req,
                                      @RequestParam(name = "ttlSeconds", required = false, defaultValue = "86400") long ttlSeconds) {
         String reservationId = inventoryService.reserve(req.getProductId(), req.getWarehouseId(), req.getQty(), req.getReference(), ttlSeconds);
@@ -70,7 +69,7 @@ public class InventoryController {
 
 
     @PostMapping("/transfer")
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
     public ResponseEntity<java.util.Map<String, String>> transfer(
             @RequestParam Long productId,
             @RequestParam Long sourceWarehouseId,
@@ -83,7 +82,7 @@ public class InventoryController {
 
 
     @GetMapping("/product/{productId}")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<List<InventorySummaryDto>> getByProduct(@PathVariable Long productId) {
         List<Inventory> invs = inventoryRepository.findByProductId(productId);
         return ResponseEntity.ok(inventoryMapper.toSummaryDtoList(invs));
@@ -91,7 +90,7 @@ public class InventoryController {
 
 
     @GetMapping("/warehouse/{warehouseId}")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<List<InventorySummaryDto>> getByWarehouse(@PathVariable Long warehouseId) {
         List<Inventory> invs = inventoryRepository.findByWarehouseId(warehouseId);
         return ResponseEntity.ok(inventoryMapper.toSummaryDtoList(invs));

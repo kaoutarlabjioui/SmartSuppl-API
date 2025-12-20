@@ -1,25 +1,28 @@
 package org.smartsupply.config;
 
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.config.Customizer;
+import org.springframework.security. config.annotation.method.configuration. EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config. annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security. web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.NullSecurityContextRepository;
+import org.springframework.security.web.savedrequest.NullRequestCache;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -27,71 +30,69 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password(passwordEncoder.encode("adminPass"))
-                .roles("ADMIN")
-                .build();
-
-        UserDetails wm = User.builder()
-                .username("wm")
-                .password(passwordEncoder.encode("wmPass"))
-                .roles("WAREHOUSE_MANAGER")
-                .build();
-
-        UserDetails client = User.builder()
-                .username("client")
-                .password(passwordEncoder.encode("clientPass"))
-                .roles("CLIENT")
-                .build();
-
-        return new InMemoryUserDetailsManager(admin, wm, client);
-    }
-
-    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Désactiver tout ce qui n'est pas nécessaire
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable)
+                .anonymous(AbstractHttpConfigurer:: disable)
 
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .cors(cors -> cors.disable())
-                .csrf(csrf -> csrf.disable())
 
-                .httpBasic(Customizer.withDefaults())
 
-                .logout(logout -> logout
-                        .logoutUrl("/api/Auth/Logout")
-                        .logoutSuccessHandler((request, response, authentication) -> {
-                            response.setHeader("WWW-Authenticate", "Basic realm=\"SmartSuppl\"");
-                            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Logged out");
-                        })
-                        .permitAll()
+                // ✅ Configuration STATELESS la plus stricte possible
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .sessionFixation().none()
+                        .enableSessionUrlRewriting(false)
+                        .maximumSessions(-1)
                 )
 
+                // Désactiver le stockage du SecurityContext dans la session
+                .securityContext(context -> context
+                        .requireExplicitSave(true)
+                        .securityContextRepository(new NullSecurityContextRepository())
+                )
 
+                // Désactiver le cache des requêtes
+                . requestCache(cache -> cache
+                        .requestCache(new NullRequestCache())
+                )
+
+                // Configuration des autorisations
                 .authorizeHttpRequests(auth -> auth
-
-
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/products/category/**").hasRole("ADMIN")
-
-                        .requestMatchers("/api/inventory/**").hasAnyRole("WAREHOUSE_MANAGER", "ADMIN")
-                        .requestMatchers("/api/shipments/**").hasAnyRole("WAREHOUSE_MANAGER", "ADMIN")
-
-                        .requestMatchers("/api/orders/**").hasAnyRole("CLIENT", "ADMIN")
-
-                        .requestMatchers("/api/**").authenticated()
+                        . requestMatchers("/api/auth/**").permitAll()
+                        . requestMatchers("/api/**").authenticated()
+                        .anyRequest().permitAll()
                 )
 
-
-
+                // Gestion des erreurs
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-                        .accessDeniedHandler((request, response, accessDeniedException) ->
-                                response.sendError(HttpStatus.FORBIDDEN.value(), "Access Denied"))
-                );
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(
+                                    "{\"error\":\"Unauthorized\"," +
+                                            "\"message\":\"" + authException.getMessage() + "\"," +
+                                            "\"path\": \"" + request.getRequestURI() + "\"}"
+                            );
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpStatus.FORBIDDEN.value());
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(
+                                    "{\"error\":\"Forbidden\"," +
+                                            "\"message\": \"" + accessDeniedException. getMessage() + "\"," +
+                                            "\"path\":\"" + request.getRequestURI() + "\"}"
+                            );
+                        })
+                )
+
+                // Ajouter le filtre JWT
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
 }

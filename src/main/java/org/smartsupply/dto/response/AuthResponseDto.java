@@ -10,5 +10,8 @@ public class AuthResponseDto {
 
     private String message;
     private UserResponseDto user;
-    private String sessionId;
+    private String accessToken;
+    private String refreshToken;
+    @Builder.Default
+    private String tokenType = "Bearer";
 }

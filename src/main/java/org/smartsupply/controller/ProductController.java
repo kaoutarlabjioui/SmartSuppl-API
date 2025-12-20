@@ -2,8 +2,6 @@ package org.smartsupply.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.smartsupply.annotation.RequireAuth;
-import org.smartsupply.annotation.RequireRole;
 import org.smartsupply.dto.request.ProductRequestDto;
 import org.smartsupply.dto.request.ProductUpdateDto;
 import org.smartsupply.dto.response.ProductResponseDto;
@@ -24,7 +22,7 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
     public ResponseEntity<ProductResponseDto> createProduct(
             @Valid @RequestBody ProductRequestDto productRequestDto) {
         ProductResponseDto response = productService.createProduct(productRequestDto);
@@ -32,35 +30,35 @@ public class ProductController {
     }
 
     @GetMapping
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<List<ProductResponseDto>> getAllProducts() {
         List<ProductResponseDto> products = productService.getAllProducts();
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/active")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<List<ProductResponseDto>> getActiveProducts() {
         List<ProductResponseDto> products = productService.getActiveProducts();
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/inactive")
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
     public ResponseEntity<List<ProductResponseDto>> getInactiveProducts() {
         List<ProductResponseDto> products = productService.getInactiveProducts();
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/{id}")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long id) {
         ProductResponseDto product = productService.getProductById(id);
         return ResponseEntity.ok(product);
     }
 
     @GetMapping("/sku/{sku}")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<ProductResponseDto> getProductBySku(@PathVariable String sku) {
         ProductResponseDto product = productService.getProductBySku(sku);
         return ResponseEntity.ok(product);
@@ -74,7 +72,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
     public ResponseEntity<ProductResponseDto> updateProduct(
             @PathVariable Long id,
             @Valid @RequestBody ProductUpdateDto productUpdateDto) {
@@ -83,35 +81,35 @@ public class ProductController {
     }
 
     @PatchMapping("/{id}/toggle-status")
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
     public ResponseEntity<ProductResponseDto> toggleProductStatus(@PathVariable Long id) {
         ProductResponseDto response = productService.toggleProductStatus(id);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    @RequireRole(Role.ADMIN)
+    //@RequireRole(Role.ADMIN)
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/search/name")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<List<ProductResponseDto>> searchByName(@RequestParam String name) {
         List<ProductResponseDto> products = productService.searchByName(name);
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/search/sku")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<List<ProductResponseDto>> searchBySku(@RequestParam String sku) {
         List<ProductResponseDto> products = productService.searchBySku(sku);
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/search")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<List<ProductResponseDto>> searchProducts(@RequestParam String keyword) {
         List<ProductResponseDto> products = productService.searchProducts(keyword);
         return ResponseEntity.ok(products);

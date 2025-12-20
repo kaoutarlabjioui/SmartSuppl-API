@@ -2,8 +2,7 @@ package org.smartsupply.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.smartsupply.annotation.RequireAuth;
-import org.smartsupply.annotation.RequireRole;
+
 import org.smartsupply.dto.request.POLineRequestDto;
 import org.smartsupply.dto.request.PurchaseOrderRequestDto;
 import org.smartsupply.dto.response.PurchaseOrderResponseDto;
@@ -31,21 +30,21 @@ public class PurchaseOrderController {
 
 
     @GetMapping
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<List<PurchaseOrderResponseDto>> list() {
         return ResponseEntity.ok(purchaseOrderService.getAllPurchaseOrders());
     }
 
 
     @GetMapping("/{id}")
-    @RequireAuth
+    //@RequireAuth
     public ResponseEntity<PurchaseOrderResponseDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(purchaseOrderService.getPurchaseOrderById(id));
     }
 
 
     @PostMapping("/{id}/lines")
-    @RequireRole({Role.WAREHOUSE_MANAGER})
+    //@RequireRole({Role.WAREHOUSE_MANAGER})
     public ResponseEntity<PurchaseOrderResponseDto> addLine(@PathVariable Long id, @Valid @RequestBody POLineRequestDto req) {
         return ResponseEntity.ok(purchaseOrderService.addLineToPurchaseOrder(id, req));
     }
@@ -67,7 +66,7 @@ public class PurchaseOrderController {
 
 
     @DeleteMapping("/{id}")
-    @RequireRole({Role.ADMIN})
+    //@RequireRole({Role.ADMIN})
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         purchaseOrderService.deletePurchaseOrder(id);
         return ResponseEntity.noContent().build();

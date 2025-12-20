@@ -1,17 +1,17 @@
 package org.smartsupply.controller;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.smartsupply.annotation.RequireAuth;
-import org.smartsupply.annotation.RequireRole;
-import org.smartsupply.dto.request.UserUpdateDto;
-import org.smartsupply.dto.response.UserStatsDto;
+import org. smartsupply.dto.request.UserUpdateDto;
+import org.smartsupply. dto.response.UserStatsDto;
 import org.smartsupply.mapper.UserMapper;
 import org.smartsupply.dto.response.UserResponseDto;
 import org.smartsupply.model.entity.User;
 import org.smartsupply.model.enums.Role;
 import org.smartsupply.service.UserService;
-import org.smartsupply.service.implementation.UserContext;
-import org.springframework.http.ResponseEntity;
+import org. springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,57 +21,81 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserContext userContext;
     private final UserMapper userMapper;
     private final UserService userService;
 
+    /**
+     * Récupérer l'utilisateur connecté
+     * Accessible à tous les utilisateurs authentifiés
+     */
     @GetMapping("/me")
-    @RequireAuth
-    public ResponseEntity<UserResponseDto> getCurrentUser() {
-        User user = userContext.getCurrentUser();
-        return ResponseEntity.ok(userMapper.toResponseDto(user));
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponseDto> getCurrentUser(@AuthenticationPrincipal User user) {
+        return ResponseEntity. ok(userMapper.toResponseDto(user));
     }
 
+    /**
+     * Lister tous les utilisateurs
+     * Accessible uniquement aux ADMIN
+     */
     @GetMapping("/all")
-    @RequireRole(Role.ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
-        List<UserResponseDto> users = userService.getAllUsers();
+        List<UserResponseDto> users = userService. getAllUsers();
         return ResponseEntity.ok(users);
     }
 
 
+    /**
+     * Lister les utilisateurs actifs
+     * Accessible uniquement aux ADMIN
+     */
     @GetMapping("/active")
-    @RequireRole(Role.ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponseDto>> getActiveUsers() {
-        List<UserResponseDto> users = userService.getActiveUsers();
+        List<UserResponseDto> users = userService. getActiveUsers();
         return ResponseEntity.ok(users);
     }
 
+    /**
+     * Lister les utilisateurs inactifs
+     * Accessible uniquement aux ADMIN
+     */
     @GetMapping("/inactive")
-    @RequireRole(Role.ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponseDto>> getInactiveUsers() {
         List<UserResponseDto> users = userService.getInactiveUsers();
-        return ResponseEntity.ok(users);
+        return ResponseEntity. ok(users);
     }
 
-
+    /**
+     * Récupérer un utilisateur par ID
+     * Accessible uniquement aux ADMIN
+     */
     @GetMapping("/{id}")
-    @RequireRole(Role.ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
         UserResponseDto user = userService.getUserById(id);
         return ResponseEntity.ok(user);
     }
 
-
+    /**
+     * Récupérer les utilisateurs par rôle
+     * Accessible uniquement aux ADMIN
+     */
     @GetMapping("/role/{role}")
-    @RequireRole(Role.ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponseDto>> getUsersByRole(@PathVariable Role role) {
         List<UserResponseDto> users = userService.getUsersByRole(role);
         return ResponseEntity.ok(users);
     }
 
+    /**
+     * Mettre à jour un utilisateur
+     * Accessible uniquement aux ADMIN
+     */
     @PutMapping("/{id}")
-    @RequireRole(Role.ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateDto userUpdateDto) {
@@ -79,55 +103,78 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
-
+    /**
+     * Activer un utilisateur
+     * Accessible uniquement aux ADMIN
+     */
     @PatchMapping("/{id}/activate")
-    @RequireRole(Role.ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> activateUser(@PathVariable Long id) {
         UserResponseDto user = userService.activateUser(id);
-        return ResponseEntity.ok(user);
+        return ResponseEntity. ok(user);
     }
 
+    /**
+     * Désactiver un utilisateur
+     * Accessible uniquement aux ADMIN
+     */
     @PatchMapping("/{id}/deactivate")
-    @RequireRole(Role.ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> deactivateUser(@PathVariable Long id) {
         UserResponseDto user = userService.deactivateUser(id);
         return ResponseEntity.ok(user);
     }
 
+    /**
+     * Supprimer un utilisateur
+     * Accessible uniquement aux ADMIN
+     */
     @DeleteMapping("/{id}")
-    @RequireRole(Role.ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 
-
+    /**
+     * Rechercher des utilisateurs
+     * Accessible uniquement aux ADMIN
+     */
     @GetMapping("/search")
-    @RequireRole(Role.ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponseDto>> searchUsers(@RequestParam String keyword) {
-        List<UserResponseDto> users = userService.searchUsers(keyword);
+        List<UserResponseDto> users = userService. searchUsers(keyword);
         return ResponseEntity.ok(users);
     }
 
+    /**
+     * Statistiques des utilisateurs
+     * Accessible uniquement aux ADMIN
+     */
     @GetMapping("/stats")
-    @RequireRole(Role.ADMIN)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserStatsDto> getUserStats() {
         UserStatsDto stats = userService.getUserStats();
         return ResponseEntity.ok(stats);
     }
 
+    /**
+     * Accès warehouse
+     * Accessible aux ADMIN et WAREHOUSE_MANAGER
+     */
     @GetMapping("/warehouse")
-    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
-    public ResponseEntity<UserResponseDto> warehouseAccess() {
-        User user = userContext.getCurrentUser();
-        return ResponseEntity.ok(userMapper.toResponseDto(user));
+    @PreAuthorize("hasAnyRole('ADMIN', 'WAREHOUSE_MANAGER')")
+    public ResponseEntity<UserResponseDto> warehouseAccess(@AuthenticationPrincipal User user) {
+        return ResponseEntity. ok(userMapper.toResponseDto(user));
     }
 
-
+    /**
+     * Espace client
+     * Accessible uniquement aux CLIENT
+     */
     @GetMapping("/client-area")
-    @RequireRole(Role.CLIENT)
-    public ResponseEntity<UserResponseDto> clientArea() {
-        User user = userContext.getCurrentUser();
-        return ResponseEntity.ok(userMapper.toResponseDto(user));
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<UserResponseDto> clientArea(@AuthenticationPrincipal User user) {
+        return ResponseEntity. ok(userMapper.toResponseDto(user));
     }
 }

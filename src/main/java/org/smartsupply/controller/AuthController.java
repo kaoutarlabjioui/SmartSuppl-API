@@ -32,9 +32,31 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponseDto> refreshToken(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        AuthResponseDto response = authService.refreshAccessToken(refreshToken);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Logout - Révoque le refresh token
+     * Le client doit envoyer le refresh token dans le body
+     */
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout(@RequestHeader("Session-Id") String sessionId) {
-        authService.logout(sessionId);
+    public ResponseEntity<Map<String, String>> logout(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Refresh token manquant"));
+        }
+
+        authService.logout(refreshToken);
         return ResponseEntity.ok(Map.of("message", "Déconnexion réussie"));
     }
+
 }
