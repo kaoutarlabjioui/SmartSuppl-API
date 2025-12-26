@@ -2,6 +2,9 @@ package org. smartsupply.service.implementation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.smartsupply.exception.DuplicateResourceException;
+import org.smartsupply.exception.ForbiddenException;
+import org.smartsupply.exception.UnauthorizedException;
 import org.smartsupply. mapper.UserMapper;
 import org. smartsupply.dto.request.LoginRequestDto;
 import org.smartsupply.dto.request.RegisterRequestDto;
@@ -28,11 +31,11 @@ public class AuthService {
     @Transactional
     public AuthResponseDto register(RegisterRequestDto registerRequestDto) {
         if (userRepository.existsByEmail(registerRequestDto.getEmail())) {
-            throw new RuntimeException("Cet email est déjà utilisé");
+            throw new DuplicateResourceException("Cet email est déjà utilisé");
         }
 
         User user = userMapper.toEntity(registerRequestDto);
-        // Les nouveaux utilisateurs utilisent BCrypt
+
         user.setPassword(passwordEncoder.encode(registerRequestDto.getPassword()));
 
         User savedUser = userRepository.save(user);
@@ -52,17 +55,17 @@ public class AuthService {
     @Transactional
     public AuthResponseDto login(LoginRequestDto loginRequestDto) {
         User user = userRepository.findByEmail(loginRequestDto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Email ou mot de passe incorrect"));
+                .orElseThrow(() -> new UnauthorizedException("Email ou mot de passe incorrect"));
 
         if (!user.getIsActive()) {
-            throw new RuntimeException("Votre compte est désactivé");
+            throw new UnauthorizedException("Votre compte est désactivé");
         }
 
-        // Vérification du mot de passe avec support de migration
+
         boolean passwordMatches = false;
         boolean needsMigration = false;
 
-        // Essayer d'abord avec BCrypt (nouveau format)
+
         if (passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
             passwordMatches = true;
         }
@@ -72,19 +75,19 @@ public class AuthService {
             if (sha256Hash.equals(user.getPassword())) {
                 passwordMatches = true;
                 needsMigration = true;
-                log.info("⚠️ Utilisateur {} utilise encore SHA-256, migration nécessaire", user.getEmail());
+                log.info(" Utilisateur {} utilise encore SHA-256, migration nécessaire", user.getEmail());
             }
         }
 
         if (!passwordMatches) {
-            throw new RuntimeException("Email ou mot de passe incorrect");
+            throw new UnauthorizedException("Email ou mot de passe incorrect");
         }
 
         // Migration automatique du mot de passe lors de la connexion
         if (needsMigration) {
             user.setPassword(passwordEncoder.encode(loginRequestDto.getPassword()));
             userRepository.save(user);
-            log.info("✅ Mot de passe migré vers BCrypt pour l'utilisateur {}", user. getEmail());
+            log.info(" Mot de passe migré vers BCrypt pour l'utilisateur {}", user. getEmail());
         }
 
         String accessToken = jwtService. generateAccessToken(user);
@@ -107,16 +110,15 @@ public class AuthService {
     @Transactional
     public AuthResponseDto refreshAccessToken(String refreshToken) {
         RefreshToken storedToken = refreshTokenService.findByToken(refreshToken)
-                .orElseThrow(() -> new RuntimeException("Refresh token invalide"));
+                .orElseThrow(() -> new UnauthorizedException("Refresh token invalide"));
 
-        if (! refreshTokenService.isValid(storedToken)) {
-            throw new RuntimeException("Refresh token expiré ou révoqué");
+        if (!refreshTokenService.isValid(storedToken)) {
+            throw new UnauthorizedException("Refresh token expiré ou révoqué");
         }
-
         User user = storedToken.getUser();
 
         if (!user.getIsActive()) {
-            throw new RuntimeException("Votre compte est désactivé");
+            throw new ForbiddenException("Votre compte est désactivé");
         }
 
         // Générer un nouveau access token

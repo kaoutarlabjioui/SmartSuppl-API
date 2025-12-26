@@ -61,6 +61,8 @@ public class SecurityConfig {
                         .requestCache(new NullRequestCache())
                 )
 
+                //.oauth2ResourceServer()
+
                 // Configuration des autorisations
                 .authorizeHttpRequests(auth -> auth
                         . requestMatchers("/api/auth/**").permitAll()

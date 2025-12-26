@@ -113,8 +113,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.error(" ERREUR dans le filtre JWT:  {}", e.getMessage(), e);
         }
 
-        log.info("🏁 ÉTAPE FINALE - Appel de filterChain.doFilter");
+        log.info(" ÉTAPE FINALE - Appel de filterChain.doFilter");
         filterChain.doFilter(request, response);
-        log.info("✅ FIN du JwtAuthenticationFilter");
+        log.info(" FIN du JwtAuthenticationFilter");
     }
 }

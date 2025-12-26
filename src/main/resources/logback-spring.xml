@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Variables -->
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="smartsupply"/>
+    <springProperty scope="context" name="ENV" source="spring.profiles.active" defaultValue="dev"/>
+
+    <!-- Console (pour voir dans IntelliJ) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Logstash TCP (envoie vers Elasticsearch) -->
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>localhost:5000</destination>
+
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"app":"${APP_NAME}","env":"${ENV}"}</customFields>
+            <includeMdc>true</includeMdc>
+
+            <!-- Masquer les données sensibles -->
+            <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+                <defaultMask>****</defaultMask>
+                <path>password</path>
+                <path>token</path>
+                <path>accessToken</path>
+                <path>refreshToken</path>
+            </jsonGeneratorDecorator>
+        </encoder>
+    </appender>
+
+    <!-- Async pour ne pas ralentir l'app -->
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="LOGSTASH"/>
+    </appender>
+
+    <!-- Loggers -->
+    <logger name="org.smartsupply" level="DEBUG">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
