@@ -1,6 +1,5 @@
 package org.smartsupply.controller;
 
-import org.smartsupply.dto.request.LoginRequestDto;
 import org.smartsupply.dto.request.RegisterRequestDto;
 import org.smartsupply.dto.response.AuthResponseDto;
 import org.smartsupply.service.implementation.AuthService;
@@ -12,8 +11,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -21,42 +18,13 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponseDto> register(@Valid @RequestBody RegisterRequestDto registerRequestDto) {
-        AuthResponseDto response = authService.register(registerRequestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<AuthResponseDto> register(@RequestBody @Valid RegisterRequestDto registerRequestDto) {
+        return new ResponseEntity<>(authService.register(registerRequestDto), HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
-        AuthResponseDto response = authService.login(loginRequestDto);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<AuthResponseDto> login(
+            @RequestBody @Valid org.smartsupply.dto.request.LoginRequestDto loginRequestDto) {
+        return ResponseEntity.ok(authService.login(loginRequestDto));
     }
-
-    @PostMapping("/refresh")
-    public ResponseEntity<AuthResponseDto> refreshToken(@RequestBody Map<String, String> request) {
-        String refreshToken = request.get("refreshToken");
-        if (refreshToken == null || refreshToken.isEmpty()) {
-            return ResponseEntity.badRequest().body(null);
-        }
-        AuthResponseDto response = authService.refreshAccessToken(refreshToken);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Logout - Révoque le refresh token
-     * Le client doit envoyer le refresh token dans le body
-     */
-    @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout(@RequestBody Map<String, String> request) {
-        String refreshToken = request.get("refreshToken");
-
-        if (refreshToken == null || refreshToken.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Refresh token manquant"));
-        }
-
-        authService.logout(refreshToken);
-        return ResponseEntity.ok(Map.of("message", "Déconnexion réussie"));
-    }
-
 }

@@ -1,4 +1,5 @@
 package org.smartsupply.dto.response;
+
 import lombok.*;
 
 @Getter
@@ -12,6 +13,5 @@ public class AuthResponseDto {
     private UserResponseDto user;
     private String accessToken;
     private String refreshToken;
-    @Builder.Default
-    private String tokenType = "Bearer";
+
 }
