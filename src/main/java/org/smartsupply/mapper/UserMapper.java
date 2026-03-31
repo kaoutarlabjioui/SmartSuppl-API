@@ -7,7 +7,7 @@ import org.smartsupply.dto.request.RegisterRequestDto;
 import org.smartsupply.dto.response.UserResponseDto;
 import org.smartsupply.model.entity.User;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel ="spring")
 public interface UserMapper {
 
 

@@ -9,6 +9,7 @@ import org.smartsupply.model.enums.Role;
 import org.smartsupply.service.WarehouseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class WarehouseController {
     private final WarehouseService warehouseService;
 
     @PostMapping
-    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<WarehouseSimpleDto> create(@Valid @RequestBody WarehouseRequestDto req) {
         WarehouseSimpleDto dto = warehouseService.createWarehouse(req);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
@@ -52,6 +53,8 @@ public class WarehouseController {
         WarehouseSimpleDto dto = warehouseService.updateWarehouse(id, req);
         return ResponseEntity.ok(dto);
     }
+
+
 
 
     @DeleteMapping("/{id}")

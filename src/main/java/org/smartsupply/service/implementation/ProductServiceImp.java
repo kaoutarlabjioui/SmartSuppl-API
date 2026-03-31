@@ -21,6 +21,7 @@ import org.smartsupply.service.ProductService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -34,6 +35,7 @@ public class ProductServiceImp implements ProductService {
     private final ProductMapper productMapper;
     private final SalesOrderLineRepository salesOrderLineRepository;
     private final InventoryRepository inventoryRepository;
+    private final S3Service s3Service;
 
     @Override
     @Transactional
@@ -48,10 +50,14 @@ public class ProductServiceImp implements ProductService {
         Category category = categoryRepository.findByName(productRequestDto.getCategoryName())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Catégorie introuvable avec l'ID: " + productRequestDto.getCategoryName()));
+        List<String> urls = productRequestDto.getImageUrls().stream()
+                .map(s3Service::uploadFile)
+                .toList();
+
 
         Product product = productMapper.toEntity(productRequestDto);
         product.setCategory(category);
-
+        product.setImageUrls(urls);
         Product savedProduct = productRepository.save(product);
         log.info("Produit créé avec succès. ID: {}, SKU: {}",
                 savedProduct.getId(), savedProduct.getSku());
@@ -137,6 +143,29 @@ public class ProductServiceImp implements ProductService {
         }
         product.setCategory(category);
 
+
+        if (productUpdateDto.getImageUrls() != null && !productUpdateDto.getImageUrls().isEmpty()) {
+
+
+            if (product.getImageUrls() != null && !product.getImageUrls().isEmpty()) {
+                List<String> oldUrls = new ArrayList<>(product.getImageUrls());
+                oldUrls.forEach(s3Service::deleteFile);
+                product.getImageUrls().clear();
+            } else {
+                product.setImageUrls(new ArrayList<>());
+            }
+
+
+            List<String> newUrls = productUpdateDto.getImageUrls().stream()
+                    .filter(file -> file != null && !file.isEmpty())
+                    .map(s3Service::uploadFile)
+                    .toList();
+
+            product.getImageUrls().addAll(newUrls);
+        }
+
+
+
         Product updatedProduct = productRepository.save(product);
         log.info("Produit mis à jour avec succès. ID: {}", updatedProduct.getId());
 
@@ -170,6 +199,22 @@ public class ProductServiceImp implements ProductService {
 
         productRepository.delete(product);
         log.info("Produit supprimé avec succès. ID: {}", id);
+    }
+
+    public void deleteProduct(Long id, boolean hard) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not Found"));
+        if (hard) {
+            boolean isUsed = salesOrderLineRepository.existsByProduct(product);
+            if(isUsed){
+                throw new RuntimeException("cant delete product,its still related to some commands");
+            } else {
+                productRepository.delete(product);
+            }
+        } else {
+            product.setActive(false);
+            productRepository.save(product);
+        }
     }
 
     @Override

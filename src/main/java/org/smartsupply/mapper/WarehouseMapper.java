@@ -11,9 +11,8 @@ public interface WarehouseMapper {
 
     WarehouseSimpleDto toSimpleDto(Warehouse warehouse);
 
-    @Mapping(target = "inventories", expression = "java(inventoryMapper.toSummaryDtoList(warehouse.getInventories()))")
     WarehouseDetailDto toDetailDto(Warehouse warehouse);
 
     // exposes inventoryMapper for SpEL in mapping expression
-    InventoryMapper inventoryMapper = null;
+//    InventoryMapper inventoryMapper = null;
 }

@@ -24,4 +24,5 @@ public class SalesOrderResponseDto {
     private List<SalesOrderLineResponseDto> lines;
 
     private List<String> warnings;
+    private LocalDateTime scheduledShippingDate;
 }

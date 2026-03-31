@@ -1,5 +1,6 @@
 package org.smartsupply.repository;
 
+import org.smartsupply.model.entity.Product;
 import org.smartsupply.model.enums.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.smartsupply.model.entity.SalesOrderLine;
@@ -13,5 +14,6 @@ public interface SalesOrderLineRepository extends JpaRepository<SalesOrderLine, 
     List<SalesOrderLine> findBySalesOrderId(Long salesOrderId);
     List<SalesOrderLine> findByProductId(Long productId);
     long countByProductId(Long productId);
+    boolean existsByProduct(Product product);
     long countByProduct_SkuAndSalesOrder_StatusIn(String sku, Collection<OrderStatus> statuses);
 }

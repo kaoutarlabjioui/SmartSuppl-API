@@ -30,7 +30,7 @@ public abstract class IntegrationTestBase {
             .withDatabaseName("smartsupply_test")
             .withUsername("test_user")
             .withPassword("test_password")
-            .withReuse(true);  // Réutilise le conteneur entre les tests
+            .withReuse(false);  // Réutilise le conteneur entre les tests
 
     // ========== CONFIGURATION DYNAMIQUE DE LA BASE DE DONNÉES ==========
 
@@ -39,6 +39,7 @@ public abstract class IntegrationTestBase {
         registry.add("spring.datasource.url", postgres:: getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring. datasource.password", postgres::getPassword);
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
     }
 
 

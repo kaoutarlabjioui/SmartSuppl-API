@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,20 +27,17 @@ public class SalesOrderController {
 
     private final SalesOrderService salesOrderService;
 
-
     @PostMapping
     public ResponseEntity<SalesOrderResponseDto> create(@Valid @RequestBody SalesOrderRequestDto request) {
         SalesOrderResponseDto created = salesOrderService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-
     @GetMapping("/{id}")
     public ResponseEntity<SalesOrderResponseDto> getById(@PathVariable Long id) {
         SalesOrderResponseDto dto = salesOrderService.getById(id);
         return ResponseEntity.ok(dto);
     }
-
 
     @GetMapping
     public ResponseEntity<Page<SalesOrderResponseDto>> listAll(
@@ -53,7 +51,6 @@ public class SalesOrderController {
         return ResponseEntity.ok(page);
     }
 
-
     @PostMapping("/{id}/lines")
     public ResponseEntity<SalesOrderResponseDto> addLine(
             @PathVariable("id") Long orderId,
@@ -63,8 +60,8 @@ public class SalesOrderController {
         return ResponseEntity.ok(dto);
     }
 
-
     @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<SalesOrderResponseDto> updateStatus(
             @PathVariable("id") Long orderId,
             @RequestParam("status") String status) {
@@ -73,13 +70,25 @@ public class SalesOrderController {
         return ResponseEntity.ok(dto);
     }
 
-    @PutMapping("/{id}/ship")
-   // @RequireRole({Role.WAREHOUSE_MANAGER, Role.ADMIN})
-    public ResponseEntity<Void> shipOrder(@PathVariable Long id, @RequestParam(required = false) String trackingNumber) {
+    @PostMapping("/{id}/shipment/plan")
+    public ResponseEntity<Void> planShipment(@PathVariable Long id,
+            @Valid @RequestBody org.smartsupply.dto.request.ShipmentRequestDto req) {
+        salesOrderService.planShipment(id, req);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/shipment/ship")
+    public ResponseEntity<Void> shipOrder(@PathVariable Long id,
+            @RequestParam(required = false) String trackingNumber) {
         salesOrderService.shipOrder(id, trackingNumber);
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/{id}/shipment/deliver")
+    public ResponseEntity<Void> deliverOrder(@PathVariable Long id) {
+        salesOrderService.deliverOrder(id);
+        return ResponseEntity.ok().build();
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

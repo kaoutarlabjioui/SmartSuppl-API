@@ -16,6 +16,7 @@ public interface ProductService {
     List<ProductResponseDto> getProductsByCategory(Long categoryId);
     ProductResponseDto updateProduct(Long id, ProductUpdateDto productUpdateDto);
     ProductResponseDto toggleProductStatus(Long id);
+    void deleteProduct(Long id,boolean hard);
     void deleteProduct(Long id);
     List<ProductResponseDto> searchByName(String name);
     List<ProductResponseDto> searchBySku(String sku);

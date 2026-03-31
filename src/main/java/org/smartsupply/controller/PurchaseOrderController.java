@@ -51,14 +51,14 @@ public class PurchaseOrderController {
 
 
     @PutMapping("/{id}/approve")
-   // @RequireRole({Role.ADMIN})
+
     public ResponseEntity<Void> approve(@PathVariable Long id) {
         purchaseOrderService.approvePurchaseOrder(id);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}/mark-received")
-    //@RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+
     public ResponseEntity<Void> markReceived(@PathVariable Long id, @RequestParam("warehouseId") Long warehouseId) {
         purchaseOrderService.markPurchaseOrderAsReceived(id, warehouseId);
         return ResponseEntity.ok().build();

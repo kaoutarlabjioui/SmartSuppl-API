@@ -11,6 +11,7 @@ import org.smartsupply.model.enums.POStatus;
 import org.smartsupply.repository.*;
 import org.smartsupply.service.InventoryService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -29,8 +30,6 @@ public class InventoryServiceImp implements InventoryService {
     private final InventoryMovementRepository movementRepository;
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final SupplierRepository supplierRepository;
-
-
 
     @Override
     @Transactional
@@ -58,7 +57,8 @@ public class InventoryServiceImp implements InventoryService {
     @Transactional
     public void inbound(Long productId, Long warehouseId, Integer qty, String reference) {
         Inventory inv = inventoryRepository.findWithLockByProductIdAndWarehouseId(productId, warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for productId=" + productId + " warehouseId=" + warehouseId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Inventory not found for productId=" + productId + " warehouseId=" + warehouseId));
         inv.setQtyOnHand(inv.getQtyOnHand() + qty);
         inventoryRepository.save(inv);
 
@@ -75,7 +75,8 @@ public class InventoryServiceImp implements InventoryService {
     @Transactional
     public void outbound(Long productId, Long warehouseId, Integer qty, String reference) {
         Inventory inv = inventoryRepository.findWithLockByProductIdAndWarehouseId(productId, warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for productId=" + productId + " warehouseId=" + warehouseId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Inventory not found for productId=" + productId + " warehouseId=" + warehouseId));
 
         int available = inv.getQtyOnHand() - inv.getQtyReserved();
         if (available < qty) {
@@ -98,7 +99,8 @@ public class InventoryServiceImp implements InventoryService {
     @Transactional
     public void adjustment(Long productId, Long warehouseId, Integer qty, String reference) {
         Inventory inv = inventoryRepository.findWithLockByProductIdAndWarehouseId(productId, warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for productId=" + productId + " warehouseId=" + warehouseId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Inventory not found for productId=" + productId + " warehouseId=" + warehouseId));
 
         int newQtyOnHand = inv.getQtyOnHand() + qty;
         if (newQtyOnHand < inv.getQtyReserved()) {
@@ -115,39 +117,42 @@ public class InventoryServiceImp implements InventoryService {
                 .reference(reference)
                 .build());
     }
-    @Override
-    @Transactional
-    public void smartReserve(Long productId , Long mainWarehouseId,Integer qty,String reference){
-        int availableMain = getAvailable(productId,mainWarehouseId);
 
-        if(availableMain >= qty){
-            reserve(productId,mainWarehouseId,qty,reference,3600);
-            log.info("Réservé entièrement dans le warehouse principal {}" , mainWarehouseId);
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = StockUnavailableException.class)
+    public void smartReserve(Long productId, Long mainWarehouseId, Integer qty, String reference) {
+        int availableMain = getAvailable(productId, mainWarehouseId);
+
+        if (availableMain >= qty) {
+            reserve(productId, mainWarehouseId, qty, reference, 3600);
+            log.info("Réservé entièrement dans le warehouse principal {}", mainWarehouseId);
             return;
         }
 
-        if(availableMain > 0){
-            reserve(productId,mainWarehouseId,availableMain,reference,3600);
-            qty-=availableMain;
+        if (availableMain > 0) {
+            reserve(productId, mainWarehouseId, availableMain, reference, 3600);
+            qty -= availableMain;
             log.info("Réservé partiellement {} dans warehouse principal {}", availableMain, mainWarehouseId);
         }
 
         List<Long> otherWarehouses = warehouseRepository.findAllIdsExcept(mainWarehouseId);
 
-        for(Long wId : otherWarehouses){
-            int available = getAvailable(productId,wId);
-            if (available<=0) continue;
+        for (Long wId : otherWarehouses) {
+            int available = getAvailable(productId, wId);
+            if (available <= 0)
+                continue;
 
-            int toReserve = Math.min(qty,available);
+            int toReserve = Math.min(qty, available);
 
             log.info("Transfert de {} unités de warehouse {} vers {}", toReserve, wId, mainWarehouseId);
             transfer(productId, wId, mainWarehouseId, toReserve, reference);
 
-            reserve(productId,mainWarehouseId,toReserve,reference,3600);
+            reserve(productId, mainWarehouseId, toReserve, reference, 3600);
             qty -= toReserve;
             log.info("Réservé {} après transfert depuis warehouse {}", toReserve, wId);
 
-            if (qty <= 0) break;
+            if (qty <= 0)
+                break;
         }
 
         if (qty > 0) {
@@ -159,6 +164,7 @@ public class InventoryServiceImp implements InventoryService {
             PurchaseOrder po = PurchaseOrder.builder()
                     .supplier(supplier)
                     .status(POStatus.CREATED)
+                    .reference(reference) // "SO:123"
                     .build();
 
             BigDecimal unitPrice = product.getOriginalPrice() != null ? product.getOriginalPrice() : BigDecimal.ZERO;
@@ -174,18 +180,19 @@ public class InventoryServiceImp implements InventoryService {
 
             PurchaseOrder saved = purchaseOrderRepository.save(po);
 
-            log.info("PurchaseOrder créé id={} pour productId={} qty={} supplierId={}", saved.getId(), productId, qty, supplier.getId());
-
+            log.info("PurchaseOrder créé id={} pour productId={} qty={} supplierId={}", saved.getId(), productId, qty,
+                    supplier.getId());
 
             throw new StockUnavailableException("PO_CREATED:" + saved.getId());
         }
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public String reserve(Long productId, Long warehouseId, Integer qty, String sourceRef, long ttlSeconds) {
         Inventory inv = inventoryRepository.findWithLockByProductIdAndWarehouseId(productId, warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Inventory not found for productId=" + productId + " warehouseId=" + warehouseId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Inventory not found for productId=" + productId + " warehouseId=" + warehouseId));
 
         int available = inv.getQtyOnHand() - inv.getQtyReserved();
         if (available < qty) {
@@ -195,7 +202,6 @@ public class InventoryServiceImp implements InventoryService {
         inv.setQtyReserved(inv.getQtyReserved() + qty);
         inventoryRepository.save(inv);
 
-
         movementRepository.save(InventoryMovement.builder()
                 .inventory(inv)
                 .type(MovementType.ADJUSTMENT)
@@ -204,19 +210,20 @@ public class InventoryServiceImp implements InventoryService {
                 .reference(sourceRef)
                 .build());
 
-
         return UUID.randomUUID().toString();
     }
 
     @Override
     @Transactional
-    public void transfer(Long productId, Long sourceWarehouseId, Long targetWarehouseId, Integer qty, String reference) {
+    public void transfer(Long productId, Long sourceWarehouseId, Long targetWarehouseId, Integer qty,
+            String reference) {
         if (sourceWarehouseId.equals(targetWarehouseId)) {
             throw new BusinessException("Source and target warehouses must differ");
         }
 
         Inventory sourceInv = inventoryRepository.findWithLockByProductIdAndWarehouseId(productId, sourceWarehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Source inventory not found for productId=" + productId + " warehouseId=" + sourceWarehouseId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Source inventory not found for productId=" + productId + " warehouseId=" + sourceWarehouseId));
 
         int available = sourceInv.getQtyOnHand() - sourceInv.getQtyReserved();
         if (available < qty) {
@@ -265,7 +272,6 @@ public class InventoryServiceImp implements InventoryService {
         Integer v = inventoryRepository.findAvailableByProductIdAndWarehouseId(productId, warehouseId);
         return v == null ? 0 : v;
     }
-
 
     private Supplier getOrCreateDefaultSupplier() {
         return supplierRepository.findAll().stream().findFirst().orElseGet(() -> {

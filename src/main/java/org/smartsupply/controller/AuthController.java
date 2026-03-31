@@ -16,12 +16,15 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin("*")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDto> register(@Valid @RequestBody RegisterRequestDto registerRequestDto) {
+
+        if(registerRequestDto == null){}
         AuthResponseDto response = authService.register(registerRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -42,10 +45,7 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Logout - Révoque le refresh token
-     * Le client doit envoyer le refresh token dans le body
-     */
+
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(@RequestBody Map<String, String> request) {
         String refreshToken = request.get("refreshToken");

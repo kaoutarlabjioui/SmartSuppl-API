@@ -2,6 +2,7 @@ package org.smartsupply.dto.response;
 
 import lombok.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -18,4 +19,5 @@ public class ProductResponseDto {
     private String unit;
     private Boolean active;
     private CategorySimpleResponseDto category;
+    private List<String> imageUrls;
 }

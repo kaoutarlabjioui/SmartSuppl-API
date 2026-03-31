@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Long> {
     long countBySupplierId(Long supplierId);
+
+    java.util.Optional<PurchaseOrder> findByReference(String reference);
 }

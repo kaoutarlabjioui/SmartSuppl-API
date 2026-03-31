@@ -17,6 +17,7 @@ import org.smartsupply.repository.*;
 import org.smartsupply.service.InventoryService;
 import org.smartsupply.service.PurchaseOrderService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -33,7 +34,8 @@ public class PurchaseOrderServiceImp implements PurchaseOrderService {
     private final ProductRepository productRepository;
     private final PurchaseOrderMapper mapper;
     private final InventoryService inventoryService;
-    private final WarehouseRepository warehouseRepository;
+     final WarehouseRepository warehouseRepository;
+    private final org.smartsupply.service.SalesOrderService salesOrderService;
 
     @Override
     @Transactional
@@ -50,7 +52,8 @@ public class PurchaseOrderServiceImp implements PurchaseOrderService {
         if (dto.getLines() != null) {
             for (POLineRequestDto poLineRequestDto : dto.getLines()) {
                 Product product = productRepository.findById(poLineRequestDto.getProductId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Product not found id=" + poLineRequestDto.getProductId()));
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "Product not found id=" + poLineRequestDto.getProductId()));
                 POLine line = POLine.builder()
                         .purchaseOrder(purchaseOrder)
                         .product(product)
@@ -121,7 +124,6 @@ public class PurchaseOrderServiceImp implements PurchaseOrderService {
         log.info("PurchaseOrder {} status changed to APPROVED", purchaseOrderId);
     }
 
-
     @Override
     @Transactional
     public void markPurchaseOrderAsReceived(Long purchaseOrderId, Long warehouseId) {
@@ -137,30 +139,43 @@ public class PurchaseOrderServiceImp implements PurchaseOrderService {
             throw new BusinessException("Only an APPROVED PurchaseOrder can be marked as RECEIVED");
         }
 
-
         if (!warehouseRepository.existsById(warehouseId)) {
             throw new ResourceNotFoundException("Warehouse not found id=" + warehouseId);
         }
-
 
         for (POLine line : po.getLines()) {
             Long productId = line.getProduct().getId();
             Integer qty = line.getQty();
 
-
             inventoryService.ensureInventoryExists(productId, warehouseId);
-
 
             String reference = "PO:" + purchaseOrderId + ":LINE:" + line.getId();
             inventoryService.inbound(productId, warehouseId, qty, reference);
 
-            log.info("Inbound applied for PO {}: product={} qty={} warehouse={} line={}", purchaseOrderId, productId, qty, warehouseId, line.getId());
+            log.info("Inbound applied for PO {}: product={} qty={} warehouse={} line={}", purchaseOrderId, productId,
+                    qty, warehouseId, line.getId());
         }
-
 
         po.setStatus(POStatus.RECEIVED);
         purchaseOrderRepository.save(po);
         log.info("PurchaseOrder {} status changed to RECEIVED", purchaseOrderId);
+
+        // Trigger SalesOrder update if linked
+        if (po.getReference() != null && po.getReference().startsWith("SO:")) {
+            try {
+                String soIdStr = po.getReference().split(":")[1];
+                Long soId = Long.parseLong(soIdStr);
+                log.info("Déclenchement automatique de la mise à jour pour la SalesOrder {}", soId);
+                // On tente de repasser en RESERVED.
+                // Si tout le stock est là, ça passera en RESERVED.
+                // Sinon, ça restera en BACKORDER (si une autre ligne manque encore) ou
+                // reviendra en BACKORDER via la logique updateStatus.
+                salesOrderService.updateStatus(soId, org.smartsupply.model.enums.OrderStatus.RESERVED.name());
+            } catch (Exception e) {
+                log.error("Erreur lors de la mise à jour automatique de la commande liée au PO {}", purchaseOrderId, e);
+                // On ne bloque pas la réception du PO pour autant
+            }
+        }
     }
 
     @Override
@@ -173,6 +188,5 @@ public class PurchaseOrderServiceImp implements PurchaseOrderService {
         }
         purchaseOrderRepository.delete(po);
     }
-
 
 }

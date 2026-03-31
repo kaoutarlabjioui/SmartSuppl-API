@@ -34,8 +34,11 @@ public class PurchaseOrder {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "reference")
+    private String reference;
+
     @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<POLine> lines = new ArrayList<>() ;
+    private List<POLine> lines = new ArrayList<>();
 
 }

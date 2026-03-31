@@ -13,20 +13,24 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long> {
 
     List<SalesOrder> findByClientId(Long clientId);
 
-
     Page<SalesOrder> findByStatus(OrderStatus status, Pageable pageable);
-
 
     Page<SalesOrder> findByClientId(Long clientId, Pageable pageable);
 
-
     Page<SalesOrder> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
 
-
     Page<SalesOrder> findByStatusAndClientId(OrderStatus status, Long clientId, Pageable pageable);
-    Page<SalesOrder> findByClientIdAndCreatedAtBetween(Long clientId, LocalDateTime start, LocalDateTime end, Pageable pageable);
-    Page<SalesOrder> findByStatusAndCreatedAtBetween(OrderStatus status, LocalDateTime start, LocalDateTime end, Pageable pageable);
-    Page<SalesOrder> findByStatusAndClientIdAndCreatedAtBetween(OrderStatus status, Long clientId, LocalDateTime start, LocalDateTime end, Pageable pageable);
+
+    Page<SalesOrder> findByClientIdAndCreatedAtBetween(Long clientId, LocalDateTime start, LocalDateTime end,
+            Pageable pageable);
+
+    Page<SalesOrder> findByStatusAndCreatedAtBetween(OrderStatus status, LocalDateTime start, LocalDateTime end,
+            Pageable pageable);
+
+    Page<SalesOrder> findByStatusAndClientIdAndCreatedAtBetween(OrderStatus status, Long clientId, LocalDateTime start,
+            LocalDateTime end, Pageable pageable);
 
     boolean existsByIdAndStatus(Long id, OrderStatus status);
+
+    List<SalesOrder> findByStatusAndCreatedAtBefore(OrderStatus status, LocalDateTime dateTime);
 }

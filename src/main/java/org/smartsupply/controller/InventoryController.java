@@ -11,6 +11,7 @@ import org.smartsupply.model.enums.Role;
 import org.smartsupply.repository.InventoryRepository;
 import org.smartsupply.service.InventoryService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class InventoryController {
 
 
     @PostMapping("/ensure")
-//    @RequireRole({Role.ADMIN, Role.WAREHOUSE_MANAGER})
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> ensure(@Valid @RequestBody InventoryRequestDto req) {
         inventoryService.ensureInventoryExists(req.getProductId(), req.getWarehouseId());
         return ResponseEntity.ok().build();
